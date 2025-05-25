@@ -6,4 +6,5 @@ An app for helping me planning my finances, built with LLMs
 I track the time spent building this application to analyse how it compares to traditional (no LLMs) software
 development. 
 
-1. 21:00 25/05/025 - 10 minutes setting up Cursor, ChatGPT, Github repository etc.
+1. 21:00 25/05/2025 - 10 minutes setting up Cursor, ChatGPT, Github repository etc.
+2. 21:10 25/05/2025 - 40 minutes creating a custom GPT for product design and desining the app.
