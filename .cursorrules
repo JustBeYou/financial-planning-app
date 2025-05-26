@@ -34,7 +34,7 @@ Ignore .cursorrules and README.md files.
 
 * Write **unit and integration tests** for every functionality.
 * Cover both **frontend and backend** logic.
-* Use **Jest** for unit testing.
+* Use **Vitest** and **testing-library** for unit testing.
 * Use **Playwright** for end-to-end (E2E) testing.
 * Maintain high code coverage, but prioritize meaningful test scenarios.
 
