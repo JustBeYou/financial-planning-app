@@ -5,6 +5,7 @@ import type { Session } from "next-auth";
 import { NetWorthWidget } from "~/features/net-worth/components/NetWorthWidget";
 import { CashEntriesWidget } from "~/features/cash/components/CashEntriesWidget";
 import { DepositsWidget } from "~/features/deposits/components/DepositsWidget";
+import { InvestmentsWidget } from "~/features/investments/components/InvestmentsWidget";
 
 interface DashboardProps {
     session: Session;
@@ -32,6 +33,7 @@ export function Dashboard({ session }: DashboardProps) {
                     <NetWorthWidget />
                     <CashEntriesWidget />
                     <DepositsWidget />
+                    <InvestmentsWidget />
                 </div>
             </div>
         </div>
