@@ -24,4 +24,5 @@ development.
 * Works best when you do something small and incrementally (like build one simple widget) and
 then you instruct it to do it again. You need to be careful providing intial "architecture".
 * Hard to get tests working.
-* Duplicates a lot of code, we need to add some rule/explicit prompt to avoi this.
+* Duplicates a lot of code, we need to add some rule/explicit prompt to avoid this.
+* Sometimes produces code that is not compatible with the linter and not that easy to fix.

@@ -1,231 +1,246 @@
 "use client";
 
-import { useState } from "react";
-import { Card } from "~/components/ui/card";
-import { Button } from "~/components/ui/button";
 import { PlusCircle } from "lucide-react";
-import { StatCard } from "~/components/ui/stat-card";
-import { DataTable, type Column } from "~/components/ui/data-table";
-import { EntryForm, type FormField } from "~/components/ui/entry-form";
+import { useState } from "react";
+import { Button } from "~/components/ui/button";
+import { Card } from "~/components/ui/card";
 import { ConfirmDeleteDialog } from "~/components/ui/confirm-delete-dialog";
+import { type Column, DataTable } from "~/components/ui/data-table";
+import { EntryForm, type FormField } from "~/components/ui/entry-form";
+import { StatCard } from "~/components/ui/stat-card";
 import {
-    formatCurrency,
-    formatDate,
-    generateNewId,
-    getTodayISODate
+	formatCurrency,
+	formatDate,
+	generateNewId,
+	getTodayISODate,
 } from "~/lib/utils";
 
 // Initial mock data
 const initialRealEstate = [
-    {
-        id: 1,
-        name: "Primary Residence",
-        value: 450000,
-        currency: "RON",
-        date: "2023-10-15"
-    },
-    {
-        id: 2,
-        name: "Rental Apartment",
-        value: 320000,
-        currency: "RON",
-        date: "2023-11-01"
-    },
-    {
-        id: 3,
-        name: "Vacation Property",
-        value: 280000,
-        currency: "RON",
-        date: "2023-09-20"
-    },
-    {
-        id: 4,
-        name: "Land Investment",
-        value: 150000,
-        currency: "RON",
-        date: "2023-08-05"
-    }
+	{
+		id: 1,
+		name: "Primary Residence",
+		value: 450000,
+		currency: "RON",
+		date: "2023-10-15",
+	},
+	{
+		id: 2,
+		name: "Rental Apartment",
+		value: 320000,
+		currency: "RON",
+		date: "2023-11-01",
+	},
+	{
+		id: 3,
+		name: "Vacation Property",
+		value: 280000,
+		currency: "RON",
+		date: "2023-09-20",
+	},
+	{
+		id: 4,
+		name: "Land Investment",
+		value: 150000,
+		currency: "RON",
+		date: "2023-08-05",
+	},
 ];
 
 type Property = {
-    id: number;
-    name: string;
-    value: number;
-    currency: string;
-    date: string;
+	id: number;
+	name: string;
+	value: number;
+	currency: string;
+	date: string;
 };
 
 export function RealEstateWidget() {
-    const [properties, setProperties] = useState<Property[]>(initialRealEstate);
-    const [isAddDialogOpen, setIsAddDialogOpen] = useState(false);
-    const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
-    const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
-    const [currentProperty, setCurrentProperty] = useState<Property | null>(null);
-    const [formData, setFormData] = useState<Omit<Property, "id">>({
-        name: "",
-        value: 0,
-        currency: "RON",
-        date: getTodayISODate(),
-    });
+	const [properties, setProperties] = useState<Property[]>(initialRealEstate);
+	const [isAddDialogOpen, setIsAddDialogOpen] = useState(false);
+	const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
+	const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
+	const [currentProperty, setCurrentProperty] = useState<Property | null>(null);
+	const [formData, setFormData] = useState<Omit<Property, "id">>({
+		name: "",
+		value: 0,
+		currency: "RON",
+		date: getTodayISODate(),
+	});
 
-    const totalValue = properties.reduce(
-        (sum, property) => sum + property.value,
-        0
-    );
+	const totalValue = properties.reduce(
+		(sum, property) => sum + property.value,
+		0,
+	);
 
-    // Form handlers
-    const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-        const { name, value } = e.target;
-        setFormData((prev) => ({
-            ...prev,
-            [name]: name === "value" ? parseFloat(value) || 0 : value,
-        }));
-    };
+	// Form handlers
+	const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+		const { name, value } = e.target;
+		setFormData((prev) => ({
+			...prev,
+			[name]: name === "value" ? Number.parseFloat(value) || 0 : value,
+		}));
+	};
 
-    // Add new property
-    const handleAdd = () => {
-        setFormData({
-            name: "",
-            value: 0,
-            currency: "RON",
-            date: getTodayISODate(),
-        });
-        setIsAddDialogOpen(true);
-    };
+	// Add new property
+	const handleAdd = () => {
+		setFormData({
+			name: "",
+			value: 0,
+			currency: "RON",
+			date: getTodayISODate(),
+		});
+		setIsAddDialogOpen(true);
+	};
 
-    const handleAddSubmit = () => {
-        const newProperty = {
-            id: generateNewId(properties),
-            ...formData,
-        };
+	const handleAddSubmit = () => {
+		const newProperty = {
+			id: generateNewId(properties),
+			...formData,
+		};
 
-        setProperties((prev) => [...prev, newProperty]);
-        setIsAddDialogOpen(false);
-    };
+		setProperties((prev) => [...prev, newProperty]);
+		setIsAddDialogOpen(false);
+	};
 
-    // Edit property
-    const handleEdit = (property: Property) => {
-        setCurrentProperty(property);
-        setFormData({
-            name: property.name,
-            value: property.value,
-            currency: property.currency,
-            date: property.date,
-        });
-        setIsEditDialogOpen(true);
-    };
+	// Edit property
+	const handleEdit = (property: Property) => {
+		setCurrentProperty(property);
+		setFormData({
+			name: property.name,
+			value: property.value,
+			currency: property.currency,
+			date: property.date,
+		});
+		setIsEditDialogOpen(true);
+	};
 
-    const handleEditSubmit = () => {
-        if (!currentProperty) return;
+	const handleEditSubmit = () => {
+		if (!currentProperty) return;
 
-        setProperties((prev) =>
-            prev.map((property) =>
-                property.id === currentProperty.id
-                    ? { ...property, ...formData }
-                    : property
-            )
-        );
-        setIsEditDialogOpen(false);
-    };
+		setProperties((prev) =>
+			prev.map((property) =>
+				property.id === currentProperty.id
+					? { ...property, ...formData }
+					: property,
+			),
+		);
+		setIsEditDialogOpen(false);
+	};
 
-    // Delete property
-    const handleDelete = (property: Property) => {
-        setCurrentProperty(property);
-        setIsDeleteDialogOpen(true);
-    };
+	// Delete property
+	const handleDelete = (property: Property) => {
+		setCurrentProperty(property);
+		setIsDeleteDialogOpen(true);
+	};
 
-    const handleDeleteConfirm = () => {
-        if (!currentProperty) return;
+	const handleDeleteConfirm = () => {
+		if (!currentProperty) return;
 
-        setProperties((prev) => prev.filter((p) => p.id !== currentProperty.id));
-        setIsDeleteDialogOpen(false);
-    };
+		setProperties((prev) => prev.filter((p) => p.id !== currentProperty.id));
+		setIsDeleteDialogOpen(false);
+	};
 
-    // Form fields configuration
-    const formFields: FormField[] = [
-        { id: "name", name: "name", label: "Property Name", type: "text" },
-        { id: "value", name: "value", label: "Value", type: "number" },
-        { id: "currency", name: "currency", label: "Currency", type: "text", disabled: true },
-        { id: "date", name: "date", label: "Appraisal Date", type: "date" },
-    ];
+	// Form fields configuration
+	const formFields: FormField[] = [
+		{ id: "name", name: "name", label: "Property Name", type: "text" },
+		{ id: "value", name: "value", label: "Value", type: "number" },
+		{
+			id: "currency",
+			name: "currency",
+			label: "Currency",
+			type: "text",
+			disabled: true,
+		},
+		{ id: "date", name: "date", label: "Appraisal Date", type: "date" },
+	];
 
-    // Table columns configuration
-    const columns: Column<Property>[] = [
-        { header: "Property", accessorKey: "name" },
-        {
-            header: "Value",
-            accessorKey: (property) => <span className="font-medium">{property.value.toLocaleString()}</span>
-        },
-        { header: "Currency", accessorKey: "currency" },
-        { header: "Last Appraised", accessorKey: (property) => formatDate(property.date) },
-    ];
+	// Table columns configuration
+	const columns: Column<Property>[] = [
+		{ header: "Property", accessorKey: "name" },
+		{
+			header: "Value",
+			accessorKey: (property) => (
+				<span className="font-medium">{property.value.toLocaleString()}</span>
+			),
+		},
+		{ header: "Currency", accessorKey: "currency" },
+		{
+			header: "Last Appraised",
+			accessorKey: (property) => formatDate(property.date),
+		},
+	];
 
-    return (
-        <Card className="col-span-full p-6">
-            <div className="mb-4 flex items-center justify-between">
-                <h2 className="text-2xl font-bold">Real Estate Assets</h2>
-                <Button onClick={handleAdd} size="sm" className="flex items-center gap-1">
-                    <PlusCircle className="h-4 w-4" />
-                    <span>Add</span>
-                </Button>
-            </div>
+	return (
+		<Card className="col-span-full p-6">
+			<div className="mb-4 flex items-center justify-between">
+				<h2 className="font-bold text-2xl">Real Estate Assets</h2>
+				<Button
+					onClick={handleAdd}
+					size="sm"
+					className="flex items-center gap-1"
+				>
+					<PlusCircle className="h-4 w-4" />
+					<span>Add</span>
+				</Button>
+			</div>
 
-            {/* Total Value */}
-            <div className="mb-6">
-                <StatCard
-                    label="Total Real Estate Value"
-                    value={totalValue}
-                    suffix=" RON"
-                />
-            </div>
+			{/* Total Value */}
+			<div className="mb-6">
+				<StatCard
+					label="Total Real Estate Value"
+					value={totalValue}
+					suffix=" RON"
+				/>
+			</div>
 
-            {/* Properties List */}
-            <div className="space-y-4">
-                <h3 className="text-lg font-semibold">All Properties</h3>
-                <DataTable
-                    columns={columns}
-                    data={properties}
-                    keyField="id"
-                    onEdit={handleEdit}
-                    onDelete={handleDelete}
-                    emptyMessage="No properties. Click 'Add' to create one."
-                />
-            </div>
+			{/* Properties List */}
+			<div className="space-y-4">
+				<h3 className="font-semibold text-lg">All Properties</h3>
+				<DataTable
+					columns={columns}
+					data={properties}
+					keyField="id"
+					onEdit={handleEdit}
+					onDelete={handleDelete}
+					emptyMessage="No properties. Click 'Add' to create one."
+				/>
+			</div>
 
-            {/* Add/Edit Forms using EntryForm */}
-            <EntryForm
-                title="Add Real Estate Property"
-                open={isAddDialogOpen}
-                onOpenChange={setIsAddDialogOpen}
-                formFields={formFields}
-                formData={formData}
-                onInputChange={handleInputChange}
-                onSubmit={handleAddSubmit}
-                submitLabel="Add Property"
-            />
+			{/* Add/Edit Forms using EntryForm */}
+			<EntryForm
+				title="Add Real Estate Property"
+				open={isAddDialogOpen}
+				onOpenChange={setIsAddDialogOpen}
+				formFields={formFields}
+				formData={formData}
+				onInputChange={handleInputChange}
+				onSubmit={handleAddSubmit}
+				submitLabel="Add Property"
+			/>
 
-            <EntryForm
-                title="Edit Real Estate Property"
-                open={isEditDialogOpen}
-                onOpenChange={setIsEditDialogOpen}
-                formFields={formFields}
-                formData={formData}
-                onInputChange={handleInputChange}
-                onSubmit={handleEditSubmit}
-                submitLabel="Save Changes"
-            />
+			<EntryForm
+				title="Edit Real Estate Property"
+				open={isEditDialogOpen}
+				onOpenChange={setIsEditDialogOpen}
+				formFields={formFields}
+				formData={formData}
+				onInputChange={handleInputChange}
+				onSubmit={handleEditSubmit}
+				submitLabel="Save Changes"
+			/>
 
-            {/* Delete Confirmation */}
-            {currentProperty && (
-                <ConfirmDeleteDialog
-                    open={isDeleteDialogOpen}
-                    onOpenChange={setIsDeleteDialogOpen}
-                    onConfirm={handleDeleteConfirm}
-                    title="Delete Property"
-                    description="Are you sure you want to delete this property?"
-                    itemName={currentProperty.name}
-                />
-            )}
-        </Card>
-    );
-} 
+			{/* Delete Confirmation */}
+			{currentProperty && (
+				<ConfirmDeleteDialog
+					open={isDeleteDialogOpen}
+					onOpenChange={setIsDeleteDialogOpen}
+					onConfirm={handleDeleteConfirm}
+					title="Delete Property"
+					description="Are you sure you want to delete this property?"
+					itemName={currentProperty.name}
+				/>
+			)}
+		</Card>
+	);
+}
