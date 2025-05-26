@@ -60,7 +60,9 @@ const investmentCreateSchema = z.object({
 	value: z.number().positive("Value must be positive"),
 	currency: z.string().default("RON"),
 	date: z.string().min(1, "Date is required"),
-	estimatedYearlyInterest: z.number().min(0, "Interest rate must be non-negative"),
+	estimatedYearlyInterest: z
+		.number()
+		.min(0, "Interest rate must be non-negative"),
 });
 
 const investmentUpdateSchema = z.object({
@@ -69,7 +71,9 @@ const investmentUpdateSchema = z.object({
 	value: z.number().positive("Value must be positive"),
 	currency: z.string(),
 	date: z.string().min(1, "Date is required"),
-	estimatedYearlyInterest: z.number().min(0, "Interest rate must be non-negative"),
+	estimatedYearlyInterest: z
+		.number()
+		.min(0, "Interest rate must be non-negative"),
 });
 
 const investmentDeleteSchema = z.object({
@@ -106,7 +110,9 @@ export const investmentsRouter = createTRPCRouter({
 	update: publicProcedure
 		.input(investmentUpdateSchema)
 		.mutation(({ input }) => {
-			const index = mockInvestments.findIndex((investment) => investment.id === input.id);
+			const index = mockInvestments.findIndex(
+				(investment) => investment.id === input.id,
+			);
 			if (index === -1) {
 				throw new Error("Investment not found");
 			}
@@ -120,12 +126,16 @@ export const investmentsRouter = createTRPCRouter({
 	delete: publicProcedure
 		.input(investmentDeleteSchema)
 		.mutation(({ input }) => {
-			const index = mockInvestments.findIndex((investment) => investment.id === input.id);
+			const index = mockInvestments.findIndex(
+				(investment) => investment.id === input.id,
+			);
 			if (index === -1) {
 				throw new Error("Investment not found");
 			}
 			const deleted = mockInvestments[index];
-			mockInvestments = mockInvestments.filter((investment) => investment.id !== input.id);
+			mockInvestments = mockInvestments.filter(
+				(investment) => investment.id !== input.id,
+			);
 			return deleted;
 		}),
 });

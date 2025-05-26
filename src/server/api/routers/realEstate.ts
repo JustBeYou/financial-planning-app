@@ -75,43 +75,43 @@ export const realEstateRouter = createTRPCRouter({
 	/**
 	 * Create a new property
 	 */
-	create: publicProcedure
-		.input(propertyCreateSchema)
-		.mutation(({ input }) => {
-			const newProperty = {
-				id: generateNewId(),
-				...input,
-			};
-			mockRealEstate.push(newProperty);
-			return newProperty;
-		}),
+	create: publicProcedure.input(propertyCreateSchema).mutation(({ input }) => {
+		const newProperty = {
+			id: generateNewId(),
+			...input,
+		};
+		mockRealEstate.push(newProperty);
+		return newProperty;
+	}),
 
 	/**
 	 * Update an existing property
 	 */
-	update: publicProcedure
-		.input(propertyUpdateSchema)
-		.mutation(({ input }) => {
-			const index = mockRealEstate.findIndex((property) => property.id === input.id);
-			if (index === -1) {
-				throw new Error("Property not found");
-			}
-			mockRealEstate[index] = input;
-			return input;
-		}),
+	update: publicProcedure.input(propertyUpdateSchema).mutation(({ input }) => {
+		const index = mockRealEstate.findIndex(
+			(property) => property.id === input.id,
+		);
+		if (index === -1) {
+			throw new Error("Property not found");
+		}
+		mockRealEstate[index] = input;
+		return input;
+	}),
 
 	/**
 	 * Delete a property
 	 */
-	delete: publicProcedure
-		.input(propertyDeleteSchema)
-		.mutation(({ input }) => {
-			const index = mockRealEstate.findIndex((property) => property.id === input.id);
-			if (index === -1) {
-				throw new Error("Property not found");
-			}
-			const deleted = mockRealEstate[index];
-			mockRealEstate = mockRealEstate.filter((property) => property.id !== input.id);
-			return deleted;
-		}),
+	delete: publicProcedure.input(propertyDeleteSchema).mutation(({ input }) => {
+		const index = mockRealEstate.findIndex(
+			(property) => property.id === input.id,
+		);
+		if (index === -1) {
+			throw new Error("Property not found");
+		}
+		const deleted = mockRealEstate[index];
+		mockRealEstate = mockRealEstate.filter(
+			(property) => property.id !== input.id,
+		);
+		return deleted;
+	}),
 });

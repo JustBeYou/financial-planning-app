@@ -46,7 +46,10 @@ let mockDeposits = [
 ];
 
 // Helper function to calculate maturity date
-const calculateMaturityDate = (startDate: string, lengthMonths: number): string => {
+const calculateMaturityDate = (
+	startDate: string,
+	lengthMonths: number,
+): string => {
 	const date = new Date(startDate);
 	date.setMonth(date.getMonth() + lengthMonths);
 	return date.toISOString().split("T")[0];
@@ -98,61 +101,55 @@ export const depositsRouter = createTRPCRouter({
 	/**
 	 * Create a new deposit
 	 */
-	create: publicProcedure
-		.input(depositCreateSchema)
-		.mutation(({ input }) => {
-			const maturityDate = calculateMaturityDate(
-				input.startDate,
-				input.lengthMonths,
-			);
+	create: publicProcedure.input(depositCreateSchema).mutation(({ input }) => {
+		const maturityDate = calculateMaturityDate(
+			input.startDate,
+			input.lengthMonths,
+		);
 
-			const newDeposit = {
-				id: generateNewId(),
-				...input,
-				maturityDate,
-			};
+		const newDeposit = {
+			id: generateNewId(),
+			...input,
+			maturityDate,
+		};
 
-			mockDeposits.push(newDeposit);
-			return newDeposit;
-		}),
+		mockDeposits.push(newDeposit);
+		return newDeposit;
+	}),
 
 	/**
 	 * Update an existing deposit
 	 */
-	update: publicProcedure
-		.input(depositUpdateSchema)
-		.mutation(({ input }) => {
-			const index = mockDeposits.findIndex((deposit) => deposit.id === input.id);
-			if (index === -1) {
-				throw new Error("Deposit not found");
-			}
+	update: publicProcedure.input(depositUpdateSchema).mutation(({ input }) => {
+		const index = mockDeposits.findIndex((deposit) => deposit.id === input.id);
+		if (index === -1) {
+			throw new Error("Deposit not found");
+		}
 
-			const maturityDate = calculateMaturityDate(
-				input.startDate,
-				input.lengthMonths,
-			);
+		const maturityDate = calculateMaturityDate(
+			input.startDate,
+			input.lengthMonths,
+		);
 
-			const updatedDeposit = {
-				...input,
-				maturityDate,
-			};
+		const updatedDeposit = {
+			...input,
+			maturityDate,
+		};
 
-			mockDeposits[index] = updatedDeposit;
-			return updatedDeposit;
-		}),
+		mockDeposits[index] = updatedDeposit;
+		return updatedDeposit;
+	}),
 
 	/**
 	 * Delete a deposit
 	 */
-	delete: publicProcedure
-		.input(depositDeleteSchema)
-		.mutation(({ input }) => {
-			const index = mockDeposits.findIndex((deposit) => deposit.id === input.id);
-			if (index === -1) {
-				throw new Error("Deposit not found");
-			}
-			const deleted = mockDeposits[index];
-			mockDeposits = mockDeposits.filter((deposit) => deposit.id !== input.id);
-			return deleted;
-		}),
+	delete: publicProcedure.input(depositDeleteSchema).mutation(({ input }) => {
+		const index = mockDeposits.findIndex((deposit) => deposit.id === input.id);
+		if (index === -1) {
+			throw new Error("Deposit not found");
+		}
+		const deleted = mockDeposits[index];
+		mockDeposits = mockDeposits.filter((deposit) => deposit.id !== input.id);
+		return deleted;
+	}),
 });

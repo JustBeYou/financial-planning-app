@@ -69,7 +69,10 @@ const debtDeleteSchema = z.object({
 
 // Helper function to generate a new ID
 const generateNewId = () => {
-	const maxId = mockDebts.reduce((max, debt) => (debt.id > max ? debt.id : max), 0);
+	const maxId = mockDebts.reduce(
+		(max, debt) => (debt.id > max ? debt.id : max),
+		0,
+	);
 	return maxId + 1;
 };
 
@@ -86,43 +89,37 @@ export const debtRouter = createTRPCRouter({
 	/**
 	 * Create a new debt
 	 */
-	create: publicProcedure
-		.input(debtCreateSchema)
-		.mutation(({ input }) => {
-			const newDebt = {
-				id: generateNewId(),
-				...input,
-			};
-			mockDebts.push(newDebt);
-			return newDebt;
-		}),
+	create: publicProcedure.input(debtCreateSchema).mutation(({ input }) => {
+		const newDebt = {
+			id: generateNewId(),
+			...input,
+		};
+		mockDebts.push(newDebt);
+		return newDebt;
+	}),
 
 	/**
 	 * Update an existing debt
 	 */
-	update: publicProcedure
-		.input(debtUpdateSchema)
-		.mutation(({ input }) => {
-			const index = mockDebts.findIndex((debt) => debt.id === input.id);
-			if (index === -1) {
-				throw new Error("Debt not found");
-			}
-			mockDebts[index] = input;
-			return input;
-		}),
+	update: publicProcedure.input(debtUpdateSchema).mutation(({ input }) => {
+		const index = mockDebts.findIndex((debt) => debt.id === input.id);
+		if (index === -1) {
+			throw new Error("Debt not found");
+		}
+		mockDebts[index] = input;
+		return input;
+	}),
 
 	/**
 	 * Delete a debt
 	 */
-	delete: publicProcedure
-		.input(debtDeleteSchema)
-		.mutation(({ input }) => {
-			const index = mockDebts.findIndex((debt) => debt.id === input.id);
-			if (index === -1) {
-				throw new Error("Debt not found");
-			}
-			const deleted = mockDebts[index];
-			mockDebts = mockDebts.filter((debt) => debt.id !== input.id);
-			return deleted;
-		}),
+	delete: publicProcedure.input(debtDeleteSchema).mutation(({ input }) => {
+		const index = mockDebts.findIndex((debt) => debt.id === input.id);
+		if (index === -1) {
+			throw new Error("Debt not found");
+		}
+		const deleted = mockDebts[index];
+		mockDebts = mockDebts.filter((debt) => debt.id !== input.id);
+		return deleted;
+	}),
 });

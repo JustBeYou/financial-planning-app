@@ -1,53 +1,8 @@
+import { and, eq } from "drizzle-orm";
 import { z } from "zod";
-import { createTRPCRouter, publicProcedure } from "~/server/api/trpc";
-
-// Mock data for the cash entries widget
-let mockCashEntries = [
-	{
-		id: 1,
-		accountName: "Savings Account",
-		amount: 15000,
-		currency: "RON",
-		date: "2023-11-15",
-	},
-	{
-		id: 2,
-		accountName: "Checking Account",
-		amount: 3500,
-		currency: "RON",
-		date: "2023-11-20",
-	},
-	{
-		id: 3,
-		accountName: "Emergency Fund",
-		amount: 25000,
-		currency: "RON",
-		date: "2023-10-05",
-	},
-	{
-		id: 4,
-		accountName: "Vacation Fund",
-		amount: 7500,
-		currency: "RON",
-		date: "2023-11-01",
-	},
-	{
-		id: 5,
-		accountName: "Cash at Home",
-		amount: 1200,
-		currency: "RON",
-		date: "2023-11-25",
-	},
-];
-
-// Helper function to generate a new ID
-const generateNewId = () => {
-	const maxId = mockCashEntries.reduce(
-		(max, entry) => (entry.id > max ? entry.id : max),
-		0,
-	);
-	return maxId + 1;
-};
+import { createTRPCRouter, protectedProcedure } from "~/server/api/trpc";
+import { db } from "~/server/db";
+import { cashEntries } from "~/server/db/schema";
 
 // Input schemas for validation
 const cashEntryCreateSchema = z.object({
@@ -73,52 +28,139 @@ export const cashRouter = createTRPCRouter({
 	/**
 	 * Get cash entries data
 	 */
-	getData: publicProcedure.query(() => {
-		// For now, return the mock data
-		// This will be replaced with actual database queries later
-		return mockCashEntries;
+	getData: protectedProcedure.query(async ({ ctx }) => {
+		const entries = await db
+			.select()
+			.from(cashEntries)
+			.where(eq(cashEntries.userId, ctx.session.user.id));
+
+		return entries.map((entry) => ({
+			...entry,
+			// Convert numeric amount back to actual decimal value
+			amount: entry.amount,
+		}));
 	}),
 
 	/**
 	 * Create a new cash entry
 	 */
-	create: publicProcedure
+	create: protectedProcedure
 		.input(cashEntryCreateSchema)
-		.mutation(({ input }) => {
-			const newEntry = {
-				id: generateNewId(),
-				...input,
+		.mutation(async ({ ctx, input }) => {
+			const result = await db
+				.insert(cashEntries)
+				.values({
+					userId: ctx.session.user.id,
+					accountName: input.accountName,
+					amount: input.amount,
+					currency: input.currency,
+					date: input.date,
+				})
+				.returning();
+
+			const newEntry = result[0];
+			if (!newEntry) {
+				throw new Error("Failed to create cash entry");
+			}
+
+			return {
+				...newEntry,
+				// Convert numeric amount back to actual decimal value for client
+				amount: newEntry.amount,
 			};
-			mockCashEntries.push(newEntry);
-			return newEntry;
 		}),
 
 	/**
 	 * Update an existing cash entry
 	 */
-	update: publicProcedure
+	update: protectedProcedure
 		.input(cashEntryUpdateSchema)
-		.mutation(({ input }) => {
-			const index = mockCashEntries.findIndex((entry) => entry.id === input.id);
-			if (index === -1) {
+		.mutation(async ({ ctx, input }) => {
+			// First verify the entry belongs to the user
+			const entryExists = await db
+				.select({ id: cashEntries.id })
+				.from(cashEntries)
+				.where(
+					and(
+						eq(cashEntries.id, input.id),
+						eq(cashEntries.userId, ctx.session.user.id),
+					),
+				)
+				.limit(1);
+
+			if (!entryExists.length) {
+				throw new Error("Cash entry not found or not owned by user");
+			}
+
+			const result = await db
+				.update(cashEntries)
+				.set({
+					accountName: input.accountName,
+					amount: input.amount,
+					currency: input.currency,
+					date: input.date,
+					updatedAt: new Date(),
+				})
+				.where(
+					and(
+						eq(cashEntries.id, input.id),
+						eq(cashEntries.userId, ctx.session.user.id),
+					),
+				)
+				.returning();
+
+			const updatedEntry = result[0];
+			if (!updatedEntry) {
 				throw new Error("Cash entry not found");
 			}
-			mockCashEntries[index] = input;
-			return input;
+
+			return {
+				...updatedEntry,
+				// Convert numeric amount back to actual decimal value for client
+				amount: updatedEntry.amount,
+			};
 		}),
 
 	/**
 	 * Delete a cash entry
 	 */
-	delete: publicProcedure
+	delete: protectedProcedure
 		.input(cashEntryDeleteSchema)
-		.mutation(({ input }) => {
-			const index = mockCashEntries.findIndex((entry) => entry.id === input.id);
-			if (index === -1) {
+		.mutation(async ({ ctx, input }) => {
+			const entryToDelete = await db
+				.select()
+				.from(cashEntries)
+				.where(
+					and(
+						eq(cashEntries.id, input.id),
+						eq(cashEntries.userId, ctx.session.user.id),
+					),
+				)
+				.limit(1);
+
+			if (!entryToDelete.length) {
+				throw new Error("Cash entry not found or not owned by user");
+			}
+
+			await db
+				.delete(cashEntries)
+				.where(
+					and(
+						eq(cashEntries.id, input.id),
+						eq(cashEntries.userId, ctx.session.user.id),
+					),
+				);
+
+			// First item is guaranteed to exist because we checked length above
+			const deletedEntry = entryToDelete[0];
+			if (!deletedEntry) {
 				throw new Error("Cash entry not found");
 			}
-			const deleted = mockCashEntries[index];
-			mockCashEntries = mockCashEntries.filter((entry) => entry.id !== input.id);
-			return deleted;
+
+			return {
+				...deletedEntry,
+				// Convert numeric amount back to actual decimal value for client
+				amount: deletedEntry.amount,
+			};
 		}),
 });

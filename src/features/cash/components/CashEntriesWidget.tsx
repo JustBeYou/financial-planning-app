@@ -8,11 +8,7 @@ import { ConfirmDeleteDialog } from "~/components/ui/confirm-delete-dialog";
 import { type Column, DataTable } from "~/components/ui/data-table";
 import { EntryForm, type FormField } from "~/components/ui/entry-form";
 import { StatCard } from "~/components/ui/stat-card";
-import {
-	formatCurrency,
-	formatDate,
-	getTodayISODate,
-} from "~/lib/utils";
+import { formatCurrency, formatDate, getTodayISODate } from "~/lib/utils";
 import { api } from "~/trpc/react";
 
 type CashEntry = {
