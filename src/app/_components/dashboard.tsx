@@ -6,6 +6,8 @@ import { NetWorthWidget } from "~/features/net-worth/components/NetWorthWidget";
 import { CashEntriesWidget } from "~/features/cash/components/CashEntriesWidget";
 import { DepositsWidget } from "~/features/deposits/components/DepositsWidget";
 import { InvestmentsWidget } from "~/features/investments/components/InvestmentsWidget";
+import { RealEstateWidget } from "~/features/real-estate/components/RealEstateWidget";
+import { DebtWidget } from "~/features/debt/components/DebtWidget";
 
 interface DashboardProps {
     session: Session;
@@ -34,6 +36,8 @@ export function Dashboard({ session }: DashboardProps) {
                     <CashEntriesWidget />
                     <DepositsWidget />
                     <InvestmentsWidget />
+                    <RealEstateWidget />
+                    <DebtWidget />
                 </div>
             </div>
         </div>
