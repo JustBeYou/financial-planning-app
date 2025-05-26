@@ -43,6 +43,32 @@ Ignore .cursorrules and README.md files.
 * Avoid unnecessary inline comments.
 * Consult specifications in `specs/` when implementing or modifying features.
 
+## Git Commit Guidelines
+
+* **Subject Line**: Keep it under 50 characters, use imperative mood (e.g., "Add feature" not "Added feature")
+* **Format**: `type(scope): short description`
+* **Types**: 
+  - `feat`: New feature
+  - `fix`: Bug fix
+  - `docs`: Documentation changes
+  - `style`: Code style changes (formatting, etc.)
+  - `refactor`: Code refactoring without feature changes
+  - `test`: Adding or updating tests
+  - `chore`: Maintenance tasks, build process, etc.
+* **Body**: Use for detailed explanation when needed. Separate from subject with blank line.
+* **Footer**: Reference issues/PRs when applicable.
+* **Example**:
+  ```
+  feat: add user authentication with NextAuth
+  
+  - Implement CredentialsProvider for login
+  - Create login form component with validation
+  - Add session management with JWT strategy
+  - Remove previous OAuth setup
+  
+  Closes #123
+  ```
+
 ## Additional Suggestions
 
 * Prefer server components in Next.js where performance is improved.
