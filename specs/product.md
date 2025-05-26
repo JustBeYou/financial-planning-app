@@ -53,7 +53,7 @@ A personal financial planning app to model and compare key long-term decisionsâ€
 
 ### **4. Essential User Flows**
 
-1. **Set Up Overview:** Enter income, savings, investments, and liabilities in summary form
+1. **Set Up Overview:** Enter income, savings, investments, and debt in summary form
 2. **Update Snapshot:** Periodically update values to track financial position
 3. **Simulate Scenarios:** Model and compare key financial strategies
 4. **Track Goals (Optional):** Set and visualize progress on long-term financial goals
