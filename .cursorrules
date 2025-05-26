@@ -1,0 +1,56 @@
+# Project Configuration and Development Rules
+
+Ignore .cursorrules and README.md files.
+
+## Environment
+
+* Use **Node.js v22**.
+* Select Node version via **nvm** (`.nvmrc` should specify `22`).
+* Use **TypeScript v5**.
+* Avoid modifying `.env` files unless explicitly specified.
+
+## Framework and Libraries
+
+* Use **Next.js v15**.
+* Use **React v19**.
+* Use **Tailwind CSS v4**.
+* Use **Drizzle** and **drizzle-orm** for database access.
+* Use **SQLite** as the database engine.
+* Use **tRPC v11** for type-safe API communication.
+* Use **Zod v3** for runtime validation.
+
+## Tooling
+
+* Use **Biome** for linting and formatting.
+
+## Code Organization
+
+* Keep all code **modular and DRY**. Avoid duplication across components, utilities, and business logic.
+* Group related functionality by domain. Follow feature-first or domain-driven folder structure.
+* Use absolute imports to simplify navigation and refactoring.
+
+## Testing
+
+* Write **unit and integration tests** for every functionality.
+* Cover both **frontend and backend** logic.
+* Use **Jest** for unit testing.
+* Use **Playwright** for end-to-end (E2E) testing.
+* Maintain high code coverage, but prioritize meaningful test scenarios.
+
+## Documentation
+
+* Use **docblocks** (`/** */`) to document functions, types, and modules.
+* Avoid unnecessary inline comments.
+* Consult specifications in `specs/` when implementing or modifying features.
+
+## Additional Suggestions
+
+* Prefer server components in Next.js where performance is improved.
+* Use environment variables for sensitive or environment-specific values.
+* Validate inputs at the API layer using **Zod** schemas shared with the client.
+* Auto-generate API and database types where applicable.
+* Keep a changelog or follow conventional commits for traceability.
+
+## Enforcement
+
+These rules are to be followed by all team members and enforced via tooling and peer review to ensure consistency and maintainability.
