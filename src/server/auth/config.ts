@@ -1,6 +1,6 @@
 import { DrizzleAdapter } from "@auth/drizzle-adapter";
 import { type DefaultSession, type NextAuthConfig } from "next-auth";
-import DiscordProvider from "next-auth/providers/discord";
+import CredentialsProvider from "next-auth/providers/credentials";
 
 import { db } from "~/server/db";
 import {
@@ -9,6 +9,33 @@ import {
   users,
   verificationTokens,
 } from "~/server/db/schema";
+
+/**
+ * Hardcoded users for authentication
+ */
+const HARDCODED_USERS = [
+  {
+    id: "1",
+    name: "Admin User",
+    email: "admin@example.com",
+    username: "admin",
+    password: "admin123",
+  },
+  {
+    id: "2",
+    name: "Test User",
+    email: "test@example.com",
+    username: "test",
+    password: "test123",
+  },
+  {
+    id: "3",
+    name: "Demo User",
+    email: "demo@example.com",
+    username: "demo",
+    password: "demo123",
+  },
+];
 
 /**
  * Module augmentation for `next-auth` types. Allows us to add custom properties to the `session`
@@ -38,7 +65,31 @@ declare module "next-auth" {
  */
 export const authConfig = {
   providers: [
-    DiscordProvider,
+    CredentialsProvider({
+      name: "credentials",
+      credentials: {
+        username: { label: "Username", type: "text", placeholder: "Enter username" },
+        password: { label: "Password", type: "password" }
+      },
+      async authorize(credentials) {
+        if (!credentials?.username || !credentials?.password) {
+          return null;
+        }
+
+        // Find user in hardcoded list
+        const user = HARDCODED_USERS.find(
+          (u) => u.username === credentials.username && u.password === credentials.password
+        );
+
+        if (user) {
+          // Return user object without password
+          const { password, ...userWithoutPassword } = user;
+          return userWithoutPassword;
+        }
+
+        return null;
+      }
+    }),
     /**
      * ...add more providers here.
      *
@@ -49,19 +100,22 @@ export const authConfig = {
      * @see https://next-auth.js.org/providers/github
      */
   ],
-  adapter: DrizzleAdapter(db, {
-    usersTable: users,
-    accountsTable: accounts,
-    sessionsTable: sessions,
-    verificationTokensTable: verificationTokens,
-  }),
+  session: {
+    strategy: "jwt", // Required for credentials provider
+  },
   callbacks: {
-    session: ({ session, user }) => ({
+    session: ({ session, token }) => ({
       ...session,
       user: {
         ...session.user,
-        id: user.id,
+        id: token.sub ?? "", // Use token.sub as user id for JWT sessions
       },
     }),
+    jwt: ({ token, user }) => {
+      if (user) {
+        token.sub = user.id;
+      }
+      return token;
+    },
   },
 } satisfies NextAuthConfig;
