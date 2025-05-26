@@ -1,7 +1,7 @@
 "use client";
 
 import { PlusCircle } from "lucide-react";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { Button } from "~/components/ui/button";
 import { Card } from "~/components/ui/card";
 import { ConfirmDeleteDialog } from "~/components/ui/confirm-delete-dialog";
@@ -15,50 +15,7 @@ import {
 	generateNewId,
 	getTodayISODate,
 } from "~/lib/utils";
-
-// Initial mock data
-const initialDebts = [
-	{
-		id: 1,
-		name: "Mortgage",
-		amount: 320000,
-		currency: "RON",
-		interestRate: 4.25,
-		lengthMonths: 240, // 20 years
-	},
-	{
-		id: 2,
-		name: "Car Loan",
-		amount: 45000,
-		currency: "RON",
-		interestRate: 5.75,
-		lengthMonths: 60, // 5 years
-	},
-	{
-		id: 3,
-		name: "Student Loan",
-		amount: 25000,
-		currency: "RON",
-		interestRate: 3.8,
-		lengthMonths: 120, // 10 years
-	},
-	{
-		id: 4,
-		name: "Personal Loan",
-		amount: 12000,
-		currency: "RON",
-		interestRate: 8.5,
-		lengthMonths: 36, // 3 years
-	},
-	{
-		id: 5,
-		name: "Credit Card",
-		amount: 7500,
-		currency: "RON",
-		interestRate: 18.9,
-		lengthMonths: 12, // 1 year
-	},
-];
+import { api } from "~/trpc/react";
 
 type Debt = {
 	id: number;
@@ -70,7 +27,11 @@ type Debt = {
 };
 
 export function DebtWidget() {
-	const [debts, setDebts] = useState<Debt[]>(initialDebts);
+	// Fetch initial debt data from the API
+	const { data: initialDebts, isLoading: isLoadingDebts } =
+		api.debt.getData.useQuery();
+
+	const [debts, setDebts] = useState<Debt[]>([]);
 	const [isAddDialogOpen, setIsAddDialogOpen] = useState(false);
 	const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
 	const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
@@ -82,6 +43,23 @@ export function DebtWidget() {
 		interestRate: 0,
 		lengthMonths: 0,
 	});
+
+	// Update local state when data is loaded from the API
+	useEffect(() => {
+		if (initialDebts) {
+			setDebts(initialDebts);
+		}
+	}, [initialDebts]);
+
+	// If data is loading, show a loading state
+	if (isLoadingDebts) {
+		return (
+			<Card className="col-span-full p-6">
+				<h2 className="font-bold text-2xl">Debt Overview</h2>
+				<p>Loading...</p>
+			</Card>
+		);
+	}
 
 	const totalDebt = debts.reduce((sum, debt) => sum + debt.amount, 0);
 

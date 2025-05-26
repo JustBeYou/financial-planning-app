@@ -1,7 +1,7 @@
 "use client";
 
 import { PlusCircle } from "lucide-react";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { Button } from "~/components/ui/button";
 import { Card } from "~/components/ui/card";
 import { ConfirmDeleteDialog } from "~/components/ui/confirm-delete-dialog";
@@ -14,38 +14,7 @@ import {
 	generateNewId,
 	getTodayISODate,
 } from "~/lib/utils";
-
-// Initial mock data
-const initialRealEstate = [
-	{
-		id: 1,
-		name: "Primary Residence",
-		value: 450000,
-		currency: "RON",
-		date: "2023-10-15",
-	},
-	{
-		id: 2,
-		name: "Rental Apartment",
-		value: 320000,
-		currency: "RON",
-		date: "2023-11-01",
-	},
-	{
-		id: 3,
-		name: "Vacation Property",
-		value: 280000,
-		currency: "RON",
-		date: "2023-09-20",
-	},
-	{
-		id: 4,
-		name: "Land Investment",
-		value: 150000,
-		currency: "RON",
-		date: "2023-08-05",
-	},
-];
+import { api } from "~/trpc/react";
 
 type Property = {
 	id: number;
@@ -56,7 +25,11 @@ type Property = {
 };
 
 export function RealEstateWidget() {
-	const [properties, setProperties] = useState<Property[]>(initialRealEstate);
+	// Fetch initial real estate data from the API
+	const { data: initialRealEstate, isLoading: isLoadingRealEstate } =
+		api.realEstate.getData.useQuery();
+
+	const [properties, setProperties] = useState<Property[]>([]);
 	const [isAddDialogOpen, setIsAddDialogOpen] = useState(false);
 	const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
 	const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
@@ -67,6 +40,23 @@ export function RealEstateWidget() {
 		currency: "RON",
 		date: getTodayISODate(),
 	});
+
+	// Update local state when data is loaded from the API
+	useEffect(() => {
+		if (initialRealEstate) {
+			setProperties(initialRealEstate);
+		}
+	}, [initialRealEstate]);
+
+	// If data is loading, show a loading state
+	if (isLoadingRealEstate) {
+		return (
+			<Card className="col-span-full p-6">
+				<h2 className="font-bold text-2xl">Real Estate Assets</h2>
+				<p>Loading...</p>
+			</Card>
+		);
+	}
 
 	const totalValue = properties.reduce(
 		(sum, property) => sum + property.value,

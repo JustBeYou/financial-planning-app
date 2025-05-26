@@ -1,7 +1,7 @@
 "use client";
 
 import { PlusCircle } from "lucide-react";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { Button } from "~/components/ui/button";
 import { Card } from "~/components/ui/card";
 import { ConfirmDeleteDialog } from "~/components/ui/confirm-delete-dialog";
@@ -16,50 +16,7 @@ import {
 	generateNewId,
 	getTodayISODate,
 } from "~/lib/utils";
-
-// Initial mock data
-const initialDeposits = [
-	{
-		id: 1,
-		bankName: "First Bank",
-		amount: 50000,
-		currency: "RON",
-		startDate: "2023-10-01",
-		interest: 5.25,
-		lengthMonths: 12,
-		maturityDate: "2024-10-01",
-	},
-	{
-		id: 2,
-		bankName: "Credit Union",
-		amount: 25000,
-		currency: "RON",
-		startDate: "2023-11-15",
-		interest: 4.75,
-		lengthMonths: 6,
-		maturityDate: "2024-05-15",
-	},
-	{
-		id: 3,
-		bankName: "National Bank",
-		amount: 100000,
-		currency: "RON",
-		startDate: "2023-09-10",
-		interest: 6.0,
-		lengthMonths: 24,
-		maturityDate: "2025-09-10",
-	},
-	{
-		id: 4,
-		bankName: "City Bank",
-		amount: 30000,
-		currency: "RON",
-		startDate: "2023-12-01",
-		interest: 5.5,
-		lengthMonths: 18,
-		maturityDate: "2025-06-01",
-	},
-];
+import { api } from "~/trpc/react";
 
 type Deposit = {
 	id: number;
@@ -73,7 +30,11 @@ type Deposit = {
 };
 
 export function DepositsWidget() {
-	const [deposits, setDeposits] = useState<Deposit[]>(initialDeposits);
+	// Fetch initial deposits data from the API
+	const { data: initialDeposits, isLoading: isLoadingDeposits } =
+		api.deposits.getData.useQuery();
+
+	const [deposits, setDeposits] = useState<Deposit[]>([]);
 	const [isAddDialogOpen, setIsAddDialogOpen] = useState(false);
 	const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
 	const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
@@ -88,6 +49,23 @@ export function DepositsWidget() {
 		interest: 0,
 		lengthMonths: 12,
 	});
+
+	// Update local state when data is loaded from the API
+	useEffect(() => {
+		if (initialDeposits) {
+			setDeposits(initialDeposits);
+		}
+	}, [initialDeposits]);
+
+	// If data is loading, show a loading state
+	if (isLoadingDeposits) {
+		return (
+			<Card className="col-span-full p-6">
+				<h2 className="font-bold text-2xl">Term Deposits</h2>
+				<p>Loading...</p>
+			</Card>
+		);
+	}
 
 	// Calculate totals for display
 	const totalDeposits = deposits.reduce(

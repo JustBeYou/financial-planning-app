@@ -1,20 +1,34 @@
 "use client";
 
 import { Card } from "~/components/ui/card";
-
-// Mock data - this will be replaced with real data later
-const mockNetWorthData = {
-	total: 250000,
-	categories: [
-		{ name: "Cash & Deposits", value: 50000, color: "#4CAF50" },
-		{ name: "Investments", value: 150000, color: "#2196F3" },
-		{ name: "Real Estate", value: 300000, color: "#FF9800" },
-		{ name: "Debt", value: -250000, color: "#F44336" },
-	],
-};
+import { api } from "~/trpc/react";
 
 export function NetWorthWidget() {
-	const totalNetWorth = mockNetWorthData.categories.reduce(
+	// Fetch net worth data from the API
+	const { data: netWorthData, isLoading } = api.netWorth.getData.useQuery();
+
+	// If data is loading, show a loading state
+	if (isLoading) {
+		return (
+			<Card className="col-span-full p-6">
+				<h2 className="mb-4 font-bold text-2xl">Net Worth Overview</h2>
+				<p>Loading...</p>
+			</Card>
+		);
+	}
+
+	// If no data, show error
+	if (!netWorthData) {
+		return (
+			<Card className="col-span-full p-6">
+				<h2 className="mb-4 font-bold text-2xl">Net Worth Overview</h2>
+				<p>Failed to load net worth data</p>
+			</Card>
+		);
+	}
+
+	// Calculate total net worth
+	const totalNetWorth = netWorthData.categories.reduce(
 		(sum, category) => sum + category.value,
 		0,
 	);
@@ -33,7 +47,7 @@ export function NetWorthWidget() {
 			<div className="space-y-4">
 				<h3 className="font-semibold text-lg">Breakdown by Category</h3>
 				<div className="space-y-3">
-					{mockNetWorthData.categories.map((category) => (
+					{netWorthData.categories.map((category) => (
 						<div
 							key={category.name}
 							className="flex items-center justify-between"

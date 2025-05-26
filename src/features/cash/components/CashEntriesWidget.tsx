@@ -1,7 +1,7 @@
 "use client";
 
 import { PlusCircle } from "lucide-react";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { Button } from "~/components/ui/button";
 import { Card } from "~/components/ui/card";
 import { ConfirmDeleteDialog } from "~/components/ui/confirm-delete-dialog";
@@ -14,45 +14,7 @@ import {
 	generateNewId,
 	getTodayISODate,
 } from "~/lib/utils";
-
-// Initial mock data
-const initialCashEntries = [
-	{
-		id: 1,
-		accountName: "Savings Account",
-		amount: 15000,
-		currency: "RON",
-		date: "2023-11-15",
-	},
-	{
-		id: 2,
-		accountName: "Checking Account",
-		amount: 3500,
-		currency: "RON",
-		date: "2023-11-20",
-	},
-	{
-		id: 3,
-		accountName: "Emergency Fund",
-		amount: 25000,
-		currency: "RON",
-		date: "2023-10-05",
-	},
-	{
-		id: 4,
-		accountName: "Vacation Fund",
-		amount: 7500,
-		currency: "RON",
-		date: "2023-11-01",
-	},
-	{
-		id: 5,
-		accountName: "Cash at Home",
-		amount: 1200,
-		currency: "RON",
-		date: "2023-11-25",
-	},
-];
+import { api } from "~/trpc/react";
 
 type CashEntry = {
 	id: number;
@@ -63,7 +25,11 @@ type CashEntry = {
 };
 
 export function CashEntriesWidget() {
-	const [entries, setEntries] = useState<CashEntry[]>(initialCashEntries);
+	// Fetch initial cash entries data from the API
+	const { data: initialCashEntries, isLoading: isLoadingCashEntries } =
+		api.cash.getData.useQuery();
+
+	const [entries, setEntries] = useState<CashEntry[]>([]);
 	const [isAddDialogOpen, setIsAddDialogOpen] = useState(false);
 	const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
 	const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
@@ -74,6 +40,23 @@ export function CashEntriesWidget() {
 		currency: "RON",
 		date: getTodayISODate(),
 	});
+
+	// Update local state when data is loaded from the API
+	useEffect(() => {
+		if (initialCashEntries) {
+			setEntries(initialCashEntries);
+		}
+	}, [initialCashEntries]);
+
+	// If data is loading, show a loading state
+	if (isLoadingCashEntries) {
+		return (
+			<Card className="col-span-full p-6">
+				<h2 className="font-bold text-2xl">Cash Entries</h2>
+				<p>Loading...</p>
+			</Card>
+		);
+	}
 
 	const totalCash = entries.reduce((sum, entry) => sum + entry.amount, 0);
 

@@ -1,3 +1,9 @@
+import { cashRouter } from "~/server/api/routers/cash";
+import { debtRouter } from "~/server/api/routers/debt";
+import { depositsRouter } from "~/server/api/routers/deposits";
+import { investmentsRouter } from "~/server/api/routers/investments";
+import { netWorthRouter } from "~/server/api/routers/netWorth";
+import { realEstateRouter } from "~/server/api/routers/realEstate";
 import { createCallerFactory, createTRPCRouter } from "~/server/api/trpc";
 
 /**
@@ -7,6 +13,12 @@ import { createCallerFactory, createTRPCRouter } from "~/server/api/trpc";
  */
 export const appRouter = createTRPCRouter({
 	// Add your routers here when you create them
+	netWorth: netWorthRouter,
+	debt: debtRouter,
+	deposits: depositsRouter,
+	realEstate: realEstateRouter,
+	investments: investmentsRouter,
+	cash: cashRouter,
 });
 
 // export type definition of API

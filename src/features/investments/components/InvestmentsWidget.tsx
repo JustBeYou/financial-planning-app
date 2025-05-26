@@ -1,7 +1,7 @@
 "use client";
 
 import { PlusCircle } from "lucide-react";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { Button } from "~/components/ui/button";
 import { Card } from "~/components/ui/card";
 import { ConfirmDeleteDialog } from "~/components/ui/confirm-delete-dialog";
@@ -15,50 +15,7 @@ import {
 	generateNewId,
 	getTodayISODate,
 } from "~/lib/utils";
-
-// Initial mock data
-const initialInvestments = [
-	{
-		id: 1,
-		name: "Stock Portfolio",
-		value: 75000,
-		currency: "RON",
-		date: "2023-11-30",
-		estimatedYearlyInterest: 8.5,
-	},
-	{
-		id: 2,
-		name: "Index Fund",
-		value: 120000,
-		currency: "RON",
-		date: "2023-11-28",
-		estimatedYearlyInterest: 7.2,
-	},
-	{
-		id: 3,
-		name: "Corporate Bonds",
-		value: 50000,
-		currency: "RON",
-		date: "2023-10-15",
-		estimatedYearlyInterest: 5.8,
-	},
-	{
-		id: 4,
-		name: "Real Estate Fund",
-		value: 200000,
-		currency: "RON",
-		date: "2023-09-01",
-		estimatedYearlyInterest: 6.5,
-	},
-	{
-		id: 5,
-		name: "Cryptocurrency",
-		value: 30000,
-		currency: "RON",
-		date: "2023-11-15",
-		estimatedYearlyInterest: 12.0,
-	},
-];
+import { api } from "~/trpc/react";
 
 type Investment = {
 	id: number;
@@ -70,8 +27,11 @@ type Investment = {
 };
 
 export function InvestmentsWidget() {
-	const [investments, setInvestments] =
-		useState<Investment[]>(initialInvestments);
+	// Fetch initial investments data from the API
+	const { data: initialInvestments, isLoading: isLoadingInvestments } =
+		api.investments.getData.useQuery();
+
+	const [investments, setInvestments] = useState<Investment[]>([]);
 	const [isAddDialogOpen, setIsAddDialogOpen] = useState(false);
 	const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
 	const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
@@ -85,6 +45,23 @@ export function InvestmentsWidget() {
 		date: getTodayISODate(),
 		estimatedYearlyInterest: 0,
 	});
+
+	// Update local state when data is loaded from the API
+	useEffect(() => {
+		if (initialInvestments) {
+			setInvestments(initialInvestments);
+		}
+	}, [initialInvestments]);
+
+	// If data is loading, show a loading state
+	if (isLoadingInvestments) {
+		return (
+			<Card className="col-span-full p-6">
+				<h2 className="font-bold text-2xl">Investments</h2>
+				<p>Loading...</p>
+			</Card>
+		);
+	}
 
 	const totalInvestments = investments.reduce(
 		(sum, investment) => sum + investment.value,
