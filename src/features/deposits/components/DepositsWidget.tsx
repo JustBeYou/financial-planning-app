@@ -220,6 +220,7 @@ export function DepositsWidget() {
 					label="Est. Interest at Maturity"
 					value={Math.round(totalEstimatedInterest)}
 					suffix=" RON"
+					className="text-accent-lime"
 				/>
 			</div>
 

@@ -51,7 +51,7 @@ export function DataTable<T>({
 		<div className="space-y-3">
 			{/* Headers */}
 			<div
-				className={"grid font-medium text-gray-500"}
+				className={"grid font-medium text-text-gray"}
 				style={{
 					gridTemplateColumns: `repeat(${columnsCount}, minmax(0, 1fr))`,
 				}}
@@ -66,12 +66,12 @@ export function DataTable<T>({
 
 			{/* Entries */}
 			{data.length === 0 ? (
-				<div className="py-4 text-center text-gray-400">{emptyMessage}</div>
+				<div className="py-4 text-center text-text-gray">{emptyMessage}</div>
 			) : (
 				data.map((item) => (
 					<div
 						key={String(item[keyField])}
-						className="grid border-gray-100 border-b py-2"
+						className="grid border-secondary-slate/30 border-b py-2"
 						style={{
 							gridTemplateColumns: `repeat(${columnsCount}, minmax(0, 1fr))`,
 						}}
@@ -99,7 +99,7 @@ export function DataTable<T>({
 										variant="ghost"
 										size="icon"
 										onClick={() => onDelete(item)}
-										className="h-8 w-8 text-red-500 hover:text-red-700"
+										className="h-8 w-8 text-accent-coral hover:text-accent-coral/80"
 									>
 										<Trash2 className="h-4 w-4" />
 									</Button>

@@ -223,6 +223,7 @@ export function InvestmentsWidget() {
 					label="Est. Yearly Earnings"
 					value={Math.round(estimatedYearlyEarnings)}
 					suffix=" RON"
+					className="text-accent-lime"
 				/>
 			</div>
 

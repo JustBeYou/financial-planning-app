@@ -3,4 +3,52 @@
 @theme {
 	--font-sans: var(--font-geist-sans), ui-sans-serif, system-ui, sans-serif,
 		"Apple Color Emoji", "Segoe UI Emoji", "Segoe UI Symbol", "Noto Color Emoji";
+
+	/* Primary Colors */
+	--color-primary-navy: #0b1b2b;
+	--color-primary-teal: #2fb5a3;
+
+	/* Secondary Colors */
+	--color-secondary-slate: #30475e;
+	--color-secondary-steel: #b0b8c1;
+
+	/* Background Colors */
+	--color-bg-charcoal: #0e1116;
+	--color-bg-jet: #1a1f24;
+
+	/* Accent Colors */
+	--color-accent-aqua: #00ffd1;
+	--color-accent-lime: #cfff04;
+	--color-accent-coral: #ff5c5c;
+
+	/* Typography Colors */
+	--color-text-white: #f2f4f6;
+	--color-text-gray: #c4c8cc;
+
+	/* UI State Colors */
+	--color-success: var(--color-accent-lime);
+	--color-error: var(--color-accent-coral);
+	--color-warning: var(--color-accent-coral);
+	--color-info: var(--color-accent-aqua);
+
+	/* Semantic UI Colors */
+	--color-background: var(--color-bg-charcoal);
+	--color-foreground: var(--color-text-white);
+	--color-card: var(--color-bg-jet);
+	--color-card-foreground: var(--color-text-white);
+	--color-popover: var(--color-bg-jet);
+	--color-popover-foreground: var(--color-text-white);
+	--color-primary: var(--color-primary-teal);
+	--color-primary-foreground: var(--color-text-white);
+	--color-secondary: var(--color-secondary-slate);
+	--color-secondary-foreground: var(--color-text-white);
+	--color-muted: var(--color-secondary-steel);
+	--color-muted-foreground: var(--color-text-gray);
+	--color-accent: var(--color-accent-aqua);
+	--color-accent-foreground: var(--color-bg-charcoal);
+	--color-destructive: var(--color-accent-coral);
+	--color-destructive-foreground: var(--color-text-white);
+	--color-border: var(--color-secondary-slate);
+	--color-input: var(--color-secondary-slate);
+	--color-ring: var(--color-primary-teal);
 }

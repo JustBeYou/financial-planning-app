@@ -31,10 +31,10 @@ export function ConfirmDeleteDialog({
 					<DialogTitle>{title}</DialogTitle>
 				</DialogHeader>
 				<div className="py-4">
-					<p className="text-gray-500 text-sm">
+					<p className="text-sm text-text-gray">
 						{description} <span className="font-medium">{itemName}</span>?
 					</p>
-					<p className="mt-2 text-red-500 text-sm">
+					<p className="mt-2 text-accent-coral text-sm">
 						This action cannot be undone.
 					</p>
 				</div>

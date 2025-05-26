@@ -39,7 +39,7 @@ export function NetWorthWidget() {
 
 			{/* Total Net Worth */}
 			<div className="mb-6">
-				<p className="text-gray-400 text-sm">Total Net Worth</p>
+				<p className="text-sm text-text-gray">Total Net Worth</p>
 				<p className="font-bold text-3xl">${totalNetWorth.toLocaleString()}</p>
 			</div>
 

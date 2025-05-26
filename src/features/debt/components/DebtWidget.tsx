@@ -178,7 +178,7 @@ export function DebtWidget() {
 		{
 			header: "Amount",
 			accessorKey: (debt) => (
-				<span className="font-medium text-red-500">
+				<span className="font-medium text-accent-coral">
 					{debt.amount.toLocaleString()}
 				</span>
 			),
@@ -214,7 +214,7 @@ export function DebtWidget() {
 					label="Total Debt"
 					value={totalDebt}
 					suffix=" RON"
-					className="text-red-500"
+					className="text-accent-coral"
 				/>
 				<StatCard
 					label="Avg. Interest Rate"
@@ -224,7 +224,7 @@ export function DebtWidget() {
 					label="Est. Yearly Interest"
 					value={Math.round(yearlyInterestPayment)}
 					suffix=" RON"
-					className="text-red-500"
+					className="text-accent-coral"
 				/>
 			</div>
 

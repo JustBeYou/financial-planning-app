@@ -33,17 +33,16 @@ export function LoginForm() {
 	};
 
 	return (
-		<div className="flex min-h-screen flex-col items-center justify-center bg-gradient-to-b from-[#2e026d] to-[#15162c] text-white">
-			<div className="w-full max-w-md rounded-xl bg-white/10 p-8 backdrop-blur-sm">
+		<div className="flex min-h-screen flex-col items-center justify-center bg-gradient-to-b from-primary-navy to-bg-charcoal text-text-white">
+			<div className="w-full max-w-md rounded-xl bg-bg-jet p-8">
 				<h1 className="mb-6 text-center font-bold text-3xl">
 					Welcome to{" "}
-					<span className="text-[hsl(280,100%,70%)]">Financial Planning</span>{" "}
-					App
+					<span className="text-primary-teal">Financial Planning</span> App
 				</h1>
 
 				<form onSubmit={handleSubmit} className="space-y-4">
 					{error && (
-						<div className="rounded-lg bg-red-500/20 p-3 text-red-200">
+						<div className="rounded-lg bg-accent-coral/30 p-3 text-text-white">
 							{error}
 						</div>
 					)}
@@ -60,7 +59,7 @@ export function LoginForm() {
 							type="text"
 							value={username}
 							onChange={(e) => setUsername(e.target.value)}
-							className="w-full rounded-lg bg-white/10 px-4 py-3 text-white placeholder-white/60 focus:outline-none focus:ring-2 focus:ring-[hsl(280,100%,70%)]"
+							className="w-full rounded-lg bg-secondary-slate px-4 py-3 text-text-white placeholder-text-gray focus:outline-none focus:ring-2 focus:ring-accent-aqua"
 							placeholder="Enter your username"
 							required
 						/>
@@ -78,7 +77,7 @@ export function LoginForm() {
 							type="password"
 							value={password}
 							onChange={(e) => setPassword(e.target.value)}
-							className="w-full rounded-lg bg-white/10 px-4 py-3 text-white placeholder-white/60 focus:outline-none focus:ring-2 focus:ring-[hsl(280,100%,70%)]"
+							className="w-full rounded-lg bg-secondary-slate px-4 py-3 text-text-white placeholder-text-gray focus:outline-none focus:ring-2 focus:ring-accent-aqua"
 							placeholder="Enter your password"
 							required
 						/>
@@ -87,13 +86,13 @@ export function LoginForm() {
 					<button
 						type="submit"
 						disabled={isLoading}
-						className="w-full rounded-lg bg-[hsl(280,100%,70%)] px-4 py-3 font-semibold text-white transition hover:bg-[hsl(280,100%,60%)] disabled:cursor-not-allowed disabled:opacity-50"
+						className="w-full rounded-lg bg-primary-teal px-4 py-3 font-semibold text-text-white transition hover:bg-accent-aqua hover:text-bg-charcoal disabled:cursor-not-allowed disabled:opacity-50"
 					>
 						{isLoading ? "Signing in..." : "Sign In"}
 					</button>
 				</form>
 
-				<div className="mt-6 text-center text-sm text-white/60">
+				<div className="mt-6 text-center text-sm text-text-gray">
 					<p>Demo credentials:</p>
 					<p>
 						<strong>admin</strong> / admin123
