@@ -1,13 +1,13 @@
 "use client";
 
-import { useState } from "react";
+import { PlusCircle, X } from "lucide-react";
 import { useSession } from "next-auth/react";
-import { AppLayout } from "../_components/AppLayout";
-import { LoginForm } from "../_components/login-form";
+import { useState } from "react";
 import { Button } from "~/components/ui/button";
 import { Card } from "~/components/ui/card";
 import { Input } from "~/components/ui/input";
-import { PlusCircle, X } from "lucide-react";
+import { AppLayout } from "../_components/AppLayout";
+import { LoginForm } from "../_components/login-form";
 
 // Types for our simulator
 type Investment = {
@@ -40,9 +40,13 @@ export default function ScenarioSimulator() {
 	const { data: session, status } = useSession();
 	const [investments, setInvestments] = useState<Investment[]>([]);
 	const [loans, setLoans] = useState<Loan[]>([]);
-	const [monthlyDisposableIncome, setMonthlyDisposableIncome] = useState<number>(0);
-	const [simulationPeriodMonths, setSimulationPeriodMonths] = useState<number>(60); // 5 years default
-	const [simulationResults, setSimulationResults] = useState<SimulationResult[]>([]);
+	const [monthlyDisposableIncome, setMonthlyDisposableIncome] =
+		useState<number>(0);
+	const [simulationPeriodMonths, setSimulationPeriodMonths] =
+		useState<number>(60); // 5 years default
+	const [simulationResults, setSimulationResults] = useState<
+		SimulationResult[]
+	>([]);
 
 	// Form states
 	const [newInvestment, setNewInvestment] = useState<Omit<Investment, "id">>({
@@ -79,7 +83,7 @@ export default function ScenarioSimulator() {
 	};
 
 	const handleRemoveInvestment = (id: string) => {
-		setInvestments(investments.filter(inv => inv.id !== id));
+		setInvestments(investments.filter((inv) => inv.id !== id));
 	};
 
 	// Handlers for loans
@@ -102,7 +106,7 @@ export default function ScenarioSimulator() {
 	};
 
 	const handleRemoveLoan = (id: string) => {
-		setLoans(loans.filter(loan => loan.id !== id));
+		setLoans(loans.filter((loan) => loan.id !== id));
 	};
 
 	// Calculate monthly payment for a loan
@@ -115,22 +119,57 @@ export default function ScenarioSimulator() {
 			return principal / payments;
 		}
 
-		return (principal * monthlyRate * Math.pow(1 + monthlyRate, payments)) /
-			(Math.pow(1 + monthlyRate, payments) - 1);
+		return (
+			(principal * monthlyRate * (1 + monthlyRate) ** payments) /
+			((1 + monthlyRate) ** payments - 1)
+		);
 	};
+
+	// Calculate total monthly expenses and remaining disposable income
+	const calculateFinancialSummary = () => {
+		const loanPayments = loans.reduce((sum, loan) => {
+			const monthlyPayment = calculateMonthlyPayment(loan);
+			return sum + monthlyPayment + loan.extraMonthlyPayment;
+		}, 0);
+
+		const investmentContributions = investments.reduce(
+			(sum, inv) => sum + inv.monthlyContribution,
+			0,
+		);
+
+		const totalMonthlyExpenses = loanPayments + investmentContributions;
+		const remainingIncome = monthlyDisposableIncome - totalMonthlyExpenses;
+
+		return {
+			loanPayments,
+			investmentContributions,
+			totalMonthlyExpenses,
+			remainingIncome,
+		};
+	};
+
+	const financialSummary = calculateFinancialSummary();
+
+	// Calculate expected monthly payment for new loan
+	const newLoanMonthlyPayment =
+		newLoan.loanAmount &&
+		newLoan.periodMonths &&
+		newLoan.interestRate !== undefined
+			? calculateMonthlyPayment(newLoan)
+			: 0;
 
 	// Run simulation
 	const runSimulation = () => {
 		const results: SimulationResult[] = [];
 
 		// Initial state
-		let currentInvestments = investments.map(inv => ({
+		let currentInvestments = investments.map((inv) => ({
 			id: inv.id,
 			name: inv.name,
 			balance: inv.initialAmount,
 		}));
 
-		let currentLoans = loans.map(loan => ({
+		let currentLoans = loans.map((loan) => ({
 			id: loan.id,
 			name: loan.name,
 			balance: loan.loanAmount,
@@ -140,8 +179,10 @@ export default function ScenarioSimulator() {
 
 		// Check if monthly expenses exceed disposable income
 		const totalMonthlyExpenses =
-			currentLoans.reduce((sum, loan) => sum + loan.monthlyPayment + loan.extraPayment, 0) +
-			investments.reduce((sum, inv) => sum + inv.monthlyContribution, 0);
+			currentLoans.reduce(
+				(sum, loan) => sum + loan.monthlyPayment + loan.extraPayment,
+				0,
+			) + investments.reduce((sum, inv) => sum + inv.monthlyContribution, 0);
 
 		if (totalMonthlyExpenses > monthlyDisposableIncome) {
 			alert("Warning: Your monthly expenses exceed your disposable income!");
@@ -151,8 +192,8 @@ export default function ScenarioSimulator() {
 		// Run simulation month by month
 		for (let month = 1; month <= simulationPeriodMonths; month++) {
 			// Update investments
-			currentInvestments = currentInvestments.map(inv => {
-				const investment = investments.find(i => i.id === inv.id);
+			currentInvestments = currentInvestments.map((inv) => {
+				const investment = investments.find((i) => i.id === inv.id);
 				if (!investment) return inv;
 
 				// Apply monthly contribution
@@ -160,27 +201,31 @@ export default function ScenarioSimulator() {
 
 				// Apply monthly interest (yearly rate / 12)
 				const monthlyInterest = investment.yearlyInterestRate / 100 / 12;
-				inv.balance *= (1 + monthlyInterest);
+				inv.balance *= 1 + monthlyInterest;
 
 				return inv;
 			});
 
 			// Update loans
-			currentLoans = currentLoans.map(loan => {
-				const loanConfig = loans.find(l => l.id === loan.id);
+			currentLoans = currentLoans.map((loan) => {
+				const loanConfig = loans.find((l) => l.id === loan.id);
 				if (!loanConfig) return loan;
 
 				// Calculate interest for this month
-				const monthlyInterest = loan.balance * (loanConfig.interestRate / 100 / 12);
+				const monthlyInterest =
+					loan.balance * (loanConfig.interestRate / 100 / 12);
 
 				// Apply regular payment + extra payment
 				const totalPayment = Math.min(
 					loan.monthlyPayment + loan.extraPayment,
-					loan.balance + monthlyInterest
+					loan.balance + monthlyInterest,
 				);
 
 				// Update balance
-				loan.balance = Math.max(0, loan.balance + monthlyInterest - totalPayment);
+				loan.balance = Math.max(
+					0,
+					loan.balance + monthlyInterest - totalPayment,
+				);
 
 				return loan;
 			});
@@ -189,16 +234,22 @@ export default function ScenarioSimulator() {
 			const investmentValues: Record<string, number> = {};
 			const loanValues: Record<string, number> = {};
 
-			currentInvestments.forEach(inv => {
+			currentInvestments.forEach((inv) => {
 				investmentValues[inv.name] = inv.balance;
 			});
 
-			currentLoans.forEach(loan => {
+			currentLoans.forEach((loan) => {
 				loanValues[loan.name] = loan.balance;
 			});
 
-			const totalInvestmentValue = currentInvestments.reduce((sum, inv) => sum + inv.balance, 0);
-			const totalLoanBalance = currentLoans.reduce((sum, loan) => sum + loan.balance, 0);
+			const totalInvestmentValue = currentInvestments.reduce(
+				(sum, inv) => sum + inv.balance,
+				0,
+			);
+			const totalLoanBalance = currentLoans.reduce(
+				(sum, loan) => sum + loan.balance,
+				0,
+			);
 
 			results.push({
 				month,
@@ -235,23 +286,127 @@ export default function ScenarioSimulator() {
 	return (
 		<AppLayout session={session}>
 			<div className="flex flex-col gap-6">
-				<h1 className="font-bold text-3xl text-primary-teal">Financial Scenario Simulator</h1>
+				<h1 className="font-bold text-3xl text-primary-teal">
+					Financial Scenario Simulator
+				</h1>
+
+				{/* Simulation Settings - MOVED TO TOP */}
+				<Card className="p-6">
+					<h2 className="mb-4 font-bold text-xl">Simulation Settings</h2>
+
+					<div className="mb-4 grid grid-cols-1 gap-4 md:grid-cols-2">
+						<div>
+							<label className="mb-1 block text-sm">
+								Monthly Disposable Income (RON)
+							</label>
+							<Input
+								type="number"
+								value={monthlyDisposableIncome}
+								onChange={(e) =>
+									setMonthlyDisposableIncome(Number(e.target.value))
+								}
+								placeholder="0"
+							/>
+						</div>
+						<div>
+							<label className="mb-1 block text-sm">
+								Simulation Period (months)
+							</label>
+							<Input
+								type="number"
+								value={simulationPeriodMonths}
+								onChange={(e) =>
+									setSimulationPeriodMonths(Number(e.target.value))
+								}
+								placeholder="60"
+							/>
+						</div>
+					</div>
+
+					{/* Financial Summary - ADDED */}
+					<div className="rounded-md bg-secondary-slate/30 p-4">
+						<h3 className="mb-2 font-semibold">Monthly Summary</h3>
+						<div className="grid grid-cols-2 gap-4">
+							<div>
+								<div className="text-sm text-text-gray">
+									Total Loan Payments:
+								</div>
+								<div className="font-medium text-accent-coral">
+									{Math.round(financialSummary.loanPayments).toLocaleString()}{" "}
+									RON
+								</div>
+							</div>
+							<div>
+								<div className="text-sm text-text-gray">
+									Investment Contributions:
+								</div>
+								<div className="font-medium">
+									{Math.round(
+										financialSummary.investmentContributions,
+									).toLocaleString()}{" "}
+									RON
+								</div>
+							</div>
+							<div>
+								<div className="text-sm text-text-gray">
+									Total Monthly Expenses:
+								</div>
+								<div className="font-medium">
+									{Math.round(
+										financialSummary.totalMonthlyExpenses,
+									).toLocaleString()}{" "}
+									RON
+								</div>
+							</div>
+							<div>
+								<div className="text-sm text-text-gray">
+									Remaining Disposable Income:
+								</div>
+								<div
+									className={`font-medium ${financialSummary.remainingIncome < 0 ? "text-accent-coral" : "text-accent-lime"}`}
+								>
+									{Math.round(
+										financialSummary.remainingIncome,
+									).toLocaleString()}{" "}
+									RON
+								</div>
+							</div>
+						</div>
+					</div>
+
+					<Button
+						onClick={runSimulation}
+						className="mt-4 w-full"
+						disabled={financialSummary.remainingIncome < 0}
+					>
+						Run Simulation
+					</Button>
+					{financialSummary.remainingIncome < 0 && (
+						<div className="mt-2 text-accent-coral text-sm">
+							Monthly expenses exceed disposable income. Please adjust your
+							inputs.
+						</div>
+					)}
+				</Card>
 
 				{/* Input Form Section */}
-				<div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+				<div className="grid grid-cols-1 gap-6 md:grid-cols-2">
 					{/* Investments */}
 					<Card className="p-6">
 						<h2 className="mb-4 font-bold text-xl">Investments</h2>
 
 						<div className="space-y-4">
-							{investments.map(investment => (
-								<div key={investment.id} className="flex items-center justify-between p-3 bg-secondary-slate/30 rounded-md">
+							{investments.map((investment) => (
+								<div
+									key={investment.id}
+									className="flex items-center justify-between rounded-md bg-secondary-slate/30 p-3"
+								>
 									<div>
 										<div className="font-semibold">{investment.name}</div>
 										<div className="text-sm text-text-gray">
-											Initial: {investment.initialAmount} RON |
-											Monthly: {investment.monthlyContribution} RON |
-											Rate: {investment.yearlyInterestRate}%
+											Initial: {investment.initialAmount} RON | Monthly:{" "}
+											{investment.monthlyContribution} RON | Rate:{" "}
+											{investment.yearlyInterestRate}%
 										</div>
 									</div>
 									<Button
@@ -268,19 +423,29 @@ export default function ScenarioSimulator() {
 							<div className="space-y-2">
 								<div className="grid grid-cols-2 gap-2">
 									<div>
-										<label className="block text-sm mb-1">Name</label>
+										<label className="mb-1 block text-sm">Name</label>
 										<Input
 											value={newInvestment.name}
-											onChange={e => setNewInvestment({ ...newInvestment, name: e.target.value })}
+											onChange={(e) =>
+												setNewInvestment({
+													...newInvestment,
+													name: e.target.value,
+												})
+											}
 											placeholder="Investment name"
 										/>
 									</div>
 									<div>
-										<label className="block text-sm mb-1">Initial Amount</label>
+										<label className="mb-1 block text-sm">Initial Amount</label>
 										<Input
 											type="number"
 											value={newInvestment.initialAmount}
-											onChange={e => setNewInvestment({ ...newInvestment, initialAmount: Number(e.target.value) })}
+											onChange={(e) =>
+												setNewInvestment({
+													...newInvestment,
+													initialAmount: Number(e.target.value),
+												})
+											}
 											placeholder="0"
 										/>
 									</div>
@@ -288,20 +453,34 @@ export default function ScenarioSimulator() {
 
 								<div className="grid grid-cols-2 gap-2">
 									<div>
-										<label className="block text-sm mb-1">Monthly Contribution</label>
+										<label className="mb-1 block text-sm">
+											Monthly Contribution
+										</label>
 										<Input
 											type="number"
 											value={newInvestment.monthlyContribution}
-											onChange={e => setNewInvestment({ ...newInvestment, monthlyContribution: Number(e.target.value) })}
+											onChange={(e) =>
+												setNewInvestment({
+													...newInvestment,
+													monthlyContribution: Number(e.target.value),
+												})
+											}
 											placeholder="0"
 										/>
 									</div>
 									<div>
-										<label className="block text-sm mb-1">Yearly Interest (%)</label>
+										<label className="mb-1 block text-sm">
+											Yearly Interest (%)
+										</label>
 										<Input
 											type="number"
 											value={newInvestment.yearlyInterestRate}
-											onChange={e => setNewInvestment({ ...newInvestment, yearlyInterestRate: Number(e.target.value) })}
+											onChange={(e) =>
+												setNewInvestment({
+													...newInvestment,
+													yearlyInterestRate: Number(e.target.value),
+												})
+											}
 											placeholder="0"
 										/>
 									</div>
@@ -309,7 +488,7 @@ export default function ScenarioSimulator() {
 
 								<Button
 									onClick={handleAddInvestment}
-									className="w-full flex items-center justify-center gap-1"
+									className="flex w-full items-center justify-center gap-1"
 								>
 									<PlusCircle className="h-4 w-4" />
 									<span>Add Investment</span>
@@ -323,15 +502,31 @@ export default function ScenarioSimulator() {
 						<h2 className="mb-4 font-bold text-xl">Loans</h2>
 
 						<div className="space-y-4">
-							{loans.map(loan => (
-								<div key={loan.id} className="flex items-center justify-between p-3 bg-secondary-slate/30 rounded-md">
+							{loans.map((loan) => (
+								<div
+									key={loan.id}
+									className="flex items-center justify-between rounded-md bg-secondary-slate/30 p-3"
+								>
 									<div>
 										<div className="font-semibold">{loan.name}</div>
 										<div className="text-sm text-text-gray">
-											Amount: {loan.loanAmount} RON |
-											Rate: {loan.interestRate}% |
-											Period: {loan.periodMonths} months |
-											Extra: {loan.extraMonthlyPayment} RON
+											Amount: {loan.loanAmount.toLocaleString()} RON | Rate:{" "}
+											{loan.interestRate}% | Period: {loan.periodMonths} months
+										</div>
+										<div className="mt-1 text-sm">
+											<span className="font-medium text-accent-coral">
+												Monthly Payment:{" "}
+												{Math.round(
+													calculateMonthlyPayment(loan),
+												).toLocaleString()}{" "}
+												RON
+											</span>
+											{loan.extraMonthlyPayment > 0 && (
+												<span className="ml-2">
+													+ {loan.extraMonthlyPayment.toLocaleString()} RON
+													extra
+												</span>
+											)}
 										</div>
 									</div>
 									<Button
@@ -348,57 +543,95 @@ export default function ScenarioSimulator() {
 							<div className="space-y-2">
 								<div className="grid grid-cols-2 gap-2">
 									<div>
-										<label className="block text-sm mb-1">Name</label>
+										<label className="mb-1 block text-sm">Name</label>
 										<Input
 											value={newLoan.name}
-											onChange={e => setNewLoan({ ...newLoan, name: e.target.value })}
+											onChange={(e) =>
+												setNewLoan({ ...newLoan, name: e.target.value })
+											}
 											placeholder="Loan name"
 										/>
 									</div>
 									<div>
-										<label className="block text-sm mb-1">Loan Amount</label>
+										<label className="mb-1 block text-sm">Loan Amount</label>
 										<Input
 											type="number"
 											value={newLoan.loanAmount}
-											onChange={e => setNewLoan({ ...newLoan, loanAmount: Number(e.target.value) })}
+											onChange={(e) =>
+												setNewLoan({
+													...newLoan,
+													loanAmount: Number(e.target.value),
+												})
+											}
 											placeholder="0"
 										/>
 									</div>
 								</div>
 
-								<div className="grid grid-3 gap-2">
+								<div className="grid grid-cols-3 gap-2">
 									<div>
-										<label className="block text-sm mb-1">Interest Rate (%)</label>
+										<label className="mb-1 block text-sm">
+											Interest Rate (%)
+										</label>
 										<Input
 											type="number"
 											value={newLoan.interestRate}
-											onChange={e => setNewLoan({ ...newLoan, interestRate: Number(e.target.value) })}
+											onChange={(e) =>
+												setNewLoan({
+													...newLoan,
+													interestRate: Number(e.target.value),
+												})
+											}
 											placeholder="0"
 										/>
 									</div>
 									<div>
-										<label className="block text-sm mb-1">Period (months)</label>
+										<label className="mb-1 block text-sm">
+											Period (months)
+										</label>
 										<Input
 											type="number"
 											value={newLoan.periodMonths}
-											onChange={e => setNewLoan({ ...newLoan, periodMonths: Number(e.target.value) })}
+											onChange={(e) =>
+												setNewLoan({
+													...newLoan,
+													periodMonths: Number(e.target.value),
+												})
+											}
 											placeholder="0"
 										/>
 									</div>
 									<div>
-										<label className="block text-sm mb-1">Extra Payment</label>
+										<label className="mb-1 block text-sm">Extra Payment</label>
 										<Input
 											type="number"
 											value={newLoan.extraMonthlyPayment}
-											onChange={e => setNewLoan({ ...newLoan, extraMonthlyPayment: Number(e.target.value) })}
+											onChange={(e) =>
+												setNewLoan({
+													...newLoan,
+													extraMonthlyPayment: Number(e.target.value),
+												})
+											}
 											placeholder="0"
 										/>
 									</div>
 								</div>
 
+								{/* Display expected monthly payment */}
+								{newLoanMonthlyPayment > 0 && (
+									<div className="rounded bg-secondary-slate/20 p-2">
+										<span className="text-sm">
+											Expected Monthly Payment:{" "}
+											<span className="font-medium text-accent-coral">
+												{Math.round(newLoanMonthlyPayment).toLocaleString()} RON
+											</span>
+										</span>
+									</div>
+								)}
+
 								<Button
 									onClick={handleAddLoan}
-									className="w-full flex items-center justify-center gap-1"
+									className="flex w-full items-center justify-center gap-1"
 								>
 									<PlusCircle className="h-4 w-4" />
 									<span>Add Loan</span>
@@ -408,39 +641,6 @@ export default function ScenarioSimulator() {
 					</Card>
 				</div>
 
-				{/* Income and Simulation Settings */}
-				<Card className="p-6">
-					<h2 className="mb-4 font-bold text-xl">Simulation Settings</h2>
-
-					<div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-						<div>
-							<label className="block text-sm mb-1">Monthly Disposable Income (RON)</label>
-							<Input
-								type="number"
-								value={monthlyDisposableIncome}
-								onChange={e => setMonthlyDisposableIncome(Number(e.target.value))}
-								placeholder="0"
-							/>
-						</div>
-						<div>
-							<label className="block text-sm mb-1">Simulation Period (months)</label>
-							<Input
-								type="number"
-								value={simulationPeriodMonths}
-								onChange={e => setSimulationPeriodMonths(Number(e.target.value))}
-								placeholder="60"
-							/>
-						</div>
-					</div>
-
-					<Button
-						onClick={runSimulation}
-						className="mt-4 w-full"
-					>
-						Run Simulation
-					</Button>
-				</Card>
-
 				{/* Simulation Results */}
 				{simulationResults.length > 0 && (
 					<Card className="p-6">
@@ -449,22 +649,40 @@ export default function ScenarioSimulator() {
 						<div className="overflow-x-auto">
 							<table className="w-full border-collapse">
 								<thead>
-									<tr className="border-b border-secondary-slate/30">
-										<th className="py-2 px-3 text-left">Month</th>
-										<th className="py-2 px-3 text-left">Total Investments</th>
-										<th className="py-2 px-3 text-left">Total Loans</th>
-										<th className="py-2 px-3 text-left">Net Worth</th>
+									<tr className="border-secondary-slate/30 border-b">
+										<th className="px-3 py-2 text-left">Month</th>
+										<th className="px-3 py-2 text-left">Total Investments</th>
+										<th className="px-3 py-2 text-left">Total Loans</th>
+										<th className="px-3 py-2 text-left">Net Worth</th>
 									</tr>
 								</thead>
 								<tbody>
 									{simulationResults
-										.filter(result => result.month === 1 || result.month % 12 === 0 || result.month === simulationResults.length)
-										.map(result => (
-											<tr key={result.month} className="border-b border-secondary-slate/30">
-												<td className="py-2 px-3">{result.month}</td>
-												<td className="py-2 px-3 font-medium">{Math.round(result.totalInvestmentValue).toLocaleString()} RON</td>
-												<td className="py-2 px-3 font-medium text-accent-coral">{Math.round(result.totalLoanBalance).toLocaleString()} RON</td>
-												<td className="py-2 px-3 font-medium text-accent-lime">{Math.round(result.netWorth).toLocaleString()} RON</td>
+										.filter(
+											(result) =>
+												result.month === 1 ||
+												result.month % 12 === 0 ||
+												result.month === simulationResults.length,
+										)
+										.map((result) => (
+											<tr
+												key={result.month}
+												className="border-secondary-slate/30 border-b"
+											>
+												<td className="px-3 py-2">{result.month}</td>
+												<td className="px-3 py-2 font-medium">
+													{Math.round(
+														result.totalInvestmentValue,
+													).toLocaleString()}{" "}
+													RON
+												</td>
+												<td className="px-3 py-2 font-medium text-accent-coral">
+													{Math.round(result.totalLoanBalance).toLocaleString()}{" "}
+													RON
+												</td>
+												<td className="px-3 py-2 font-medium text-accent-lime">
+													{Math.round(result.netWorth).toLocaleString()} RON
+												</td>
 											</tr>
 										))}
 								</tbody>
@@ -472,34 +690,45 @@ export default function ScenarioSimulator() {
 						</div>
 
 						{/* Detailed Results */}
-						<div className="mt-6 grid grid-cols-1 md:grid-cols-2 gap-6">
+						<div className="mt-6 grid grid-cols-1 gap-6 md:grid-cols-2">
 							{/* Investments Details */}
 							{investments.length > 0 && (
 								<div>
 									<h3 className="mb-2 font-semibold">Investment Growth</h3>
 									<table className="w-full border-collapse">
 										<thead>
-											<tr className="border-b border-secondary-slate/30">
-												<th className="py-2 px-3 text-left">Name</th>
-												<th className="py-2 px-3 text-left">Initial</th>
-												<th className="py-2 px-3 text-left">Final Value</th>
-												<th className="py-2 px-3 text-left">Growth</th>
+											<tr className="border-secondary-slate/30 border-b">
+												<th className="px-3 py-2 text-left">Name</th>
+												<th className="px-3 py-2 text-left">Initial</th>
+												<th className="px-3 py-2 text-left">Final Value</th>
+												<th className="px-3 py-2 text-left">Growth</th>
 											</tr>
 										</thead>
 										<tbody>
-											{investments.map(investment => {
+											{investments.map((investment) => {
 												const initialValue = investment.initialAmount;
-												const finalValue = simulationResults[simulationResults.length - 1]?.investments[investment.name] || 0;
+												const finalValue =
+													simulationResults[simulationResults.length - 1]
+														?.investments[investment.name] || 0;
 												const growth = finalValue - initialValue;
-												const growthPercent = initialValue > 0 ? (growth / initialValue) * 100 : 0;
+												const growthPercent =
+													initialValue > 0 ? (growth / initialValue) * 100 : 0;
 
 												return (
-													<tr key={investment.id} className="border-b border-secondary-slate/30">
-														<td className="py-2 px-3">{investment.name}</td>
-														<td className="py-2 px-3">{initialValue.toLocaleString()} RON</td>
-														<td className="py-2 px-3 font-medium">{Math.round(finalValue).toLocaleString()} RON</td>
-														<td className="py-2 px-3 font-medium text-accent-lime">
-															{Math.round(growth).toLocaleString()} RON ({growthPercent.toFixed(2)}%)
+													<tr
+														key={investment.id}
+														className="border-secondary-slate/30 border-b"
+													>
+														<td className="px-3 py-2">{investment.name}</td>
+														<td className="px-3 py-2">
+															{initialValue.toLocaleString()} RON
+														</td>
+														<td className="px-3 py-2 font-medium">
+															{Math.round(finalValue).toLocaleString()} RON
+														</td>
+														<td className="px-3 py-2 font-medium text-accent-lime">
+															{Math.round(growth).toLocaleString()} RON (
+															{growthPercent.toFixed(2)}%)
 														</td>
 													</tr>
 												);
@@ -515,27 +744,37 @@ export default function ScenarioSimulator() {
 									<h3 className="mb-2 font-semibold">Loan Payoff</h3>
 									<table className="w-full border-collapse">
 										<thead>
-											<tr className="border-b border-secondary-slate/30">
-												<th className="py-2 px-3 text-left">Name</th>
-												<th className="py-2 px-3 text-left">Initial</th>
-												<th className="py-2 px-3 text-left">Remaining</th>
-												<th className="py-2 px-3 text-left">Paid Off</th>
+											<tr className="border-secondary-slate/30 border-b">
+												<th className="px-3 py-2 text-left">Name</th>
+												<th className="px-3 py-2 text-left">Initial</th>
+												<th className="px-3 py-2 text-left">Remaining</th>
+												<th className="px-3 py-2 text-left">Paid Off</th>
 											</tr>
 										</thead>
 										<tbody>
-											{loans.map(loan => {
+											{loans.map((loan) => {
 												const initialValue = loan.loanAmount;
-												const finalValue = simulationResults[simulationResults.length - 1]?.loans[loan.name] || 0;
+												const finalValue =
+													simulationResults[simulationResults.length - 1]
+														?.loans[loan.name] || 0;
 												const paidOff = initialValue - finalValue;
 												const paidOffPercent = (paidOff / initialValue) * 100;
 
 												return (
-													<tr key={loan.id} className="border-b border-secondary-slate/30">
-														<td className="py-2 px-3">{loan.name}</td>
-														<td className="py-2 px-3">{initialValue.toLocaleString()} RON</td>
-														<td className="py-2 px-3 font-medium text-accent-coral">{Math.round(finalValue).toLocaleString()} RON</td>
-														<td className="py-2 px-3 font-medium">
-															{Math.round(paidOff).toLocaleString()} RON ({paidOffPercent.toFixed(2)}%)
+													<tr
+														key={loan.id}
+														className="border-secondary-slate/30 border-b"
+													>
+														<td className="px-3 py-2">{loan.name}</td>
+														<td className="px-3 py-2">
+															{initialValue.toLocaleString()} RON
+														</td>
+														<td className="px-3 py-2 font-medium text-accent-coral">
+															{Math.round(finalValue).toLocaleString()} RON
+														</td>
+														<td className="px-3 py-2 font-medium">
+															{Math.round(paidOff).toLocaleString()} RON (
+															{paidOffPercent.toFixed(2)}%)
 														</td>
 													</tr>
 												);
