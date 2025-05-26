@@ -3,9 +3,18 @@
 import { useState } from "react";
 import { Card } from "~/components/ui/card";
 import { Button } from "~/components/ui/button";
-import { Input } from "~/components/ui/input";
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "~/components/ui/dialog";
-import { PlusCircle, Pencil, Trash2 } from "lucide-react";
+import { PlusCircle } from "lucide-react";
+import { StatCard } from "~/components/ui/stat-card";
+import { DataTable, type Column } from "~/components/ui/data-table";
+import { EntryForm, type FormField } from "~/components/ui/entry-form";
+import { ConfirmDeleteDialog } from "~/components/ui/confirm-delete-dialog";
+import {
+    formatCurrency,
+    formatDate,
+    formatPercentage,
+    generateNewId,
+    getTodayISODate
+} from "~/lib/utils";
 
 // Initial mock data
 const initialInvestments = [
@@ -70,7 +79,7 @@ export function InvestmentsWidget() {
         name: "",
         value: 0,
         currency: "RON",
-        date: new Date().toISOString().split("T")[0],
+        date: getTodayISODate(),
         estimatedYearlyInterest: 0,
     });
 
@@ -109,19 +118,15 @@ export function InvestmentsWidget() {
             name: "",
             value: 0,
             currency: "RON",
-            date: new Date().toISOString().split("T")[0],
+            date: getTodayISODate(),
             estimatedYearlyInterest: 0,
         });
         setIsAddDialogOpen(true);
     };
 
     const handleAddSubmit = () => {
-        const newId = investments.length > 0
-            ? Math.max(...investments.map(inv => inv.id)) + 1
-            : 1;
-
         const newInvestment = {
-            id: newId,
+            id: generateNewId(investments),
             ...formData,
         };
 
@@ -168,6 +173,30 @@ export function InvestmentsWidget() {
         setIsDeleteDialogOpen(false);
     };
 
+    // Form fields configuration
+    const formFields: FormField[] = [
+        { id: "name", name: "name", label: "Investment Name", type: "text" },
+        { id: "value", name: "value", label: "Value", type: "number" },
+        { id: "currency", name: "currency", label: "Currency", type: "text", disabled: true },
+        { id: "date", name: "date", label: "Date", type: "date" },
+        { id: "estimatedYearlyInterest", name: "estimatedYearlyInterest", label: "Est. Yearly Return (%)", type: "number" },
+    ];
+
+    // Table columns configuration
+    const columns: Column<Investment>[] = [
+        { header: "Investment", accessorKey: "name" },
+        {
+            header: "Value",
+            accessorKey: (investment) => <span className="font-medium">{investment.value.toLocaleString()}</span>
+        },
+        { header: "Currency", accessorKey: "currency" },
+        { header: "Last Updated", accessorKey: (investment) => formatDate(investment.date) },
+        {
+            header: "Est. Yearly Return",
+            accessorKey: (investment) => formatPercentage(investment.estimatedYearlyInterest)
+        },
+    ];
+
     return (
         <Card className="col-span-full p-6">
             <div className="mb-4 flex items-center justify-between">
@@ -180,267 +209,69 @@ export function InvestmentsWidget() {
 
             {/* Summary Section */}
             <div className="mb-6 grid grid-cols-3 gap-4">
-                <div>
-                    <p className="text-sm text-gray-400">Total Investments</p>
-                    <p className="text-3xl font-bold">
-                        {totalInvestments.toLocaleString()} RON
-                    </p>
-                </div>
-                <div>
-                    <p className="text-sm text-gray-400">Avg. Est. Yearly Return</p>
-                    <p className="text-3xl font-bold">
-                        {averageYearlyInterest.toFixed(2)}%
-                    </p>
-                </div>
-                <div>
-                    <p className="text-sm text-gray-400">Est. Yearly Earnings</p>
-                    <p className="text-3xl font-bold">
-                        {Math.round(estimatedYearlyEarnings).toLocaleString()} RON
-                    </p>
-                </div>
+                <StatCard
+                    label="Total Investments"
+                    value={totalInvestments}
+                    suffix=" RON"
+                />
+                <StatCard
+                    label="Avg. Est. Yearly Return"
+                    value={formatPercentage(averageYearlyInterest)}
+                />
+                <StatCard
+                    label="Est. Yearly Earnings"
+                    value={Math.round(estimatedYearlyEarnings)}
+                    suffix=" RON"
+                />
             </div>
 
             {/* Investments List */}
             <div className="space-y-4">
                 <h3 className="text-lg font-semibold">All Investments</h3>
-                <div className="space-y-3">
-                    {/* Headers */}
-                    <div className="grid grid-cols-6 font-medium text-gray-500">
-                        <span>Investment</span>
-                        <span>Value</span>
-                        <span>Currency</span>
-                        <span>Last Updated</span>
-                        <span>Est. Yearly Return</span>
-                        <span>Actions</span>
-                    </div>
-
-                    {/* Entries */}
-                    {investments.length === 0 ? (
-                        <div className="py-4 text-center text-gray-400">
-                            No investments. Click "Add" to create one.
-                        </div>
-                    ) : (
-                        investments.map((investment) => (
-                            <div key={investment.id} className="grid grid-cols-6 border-b border-gray-100 py-2">
-                                <span>{investment.name}</span>
-                                <span className="font-medium">
-                                    {investment.value.toLocaleString()}
-                                </span>
-                                <span>{investment.currency}</span>
-                                <span>{new Date(investment.date).toLocaleDateString()}</span>
-                                <span className="font-medium">
-                                    {investment.estimatedYearlyInterest.toFixed(1)}%
-                                </span>
-                                <span className="flex gap-2">
-                                    <Button
-                                        variant="ghost"
-                                        size="icon"
-                                        onClick={() => handleEdit(investment)}
-                                        className="h-8 w-8"
-                                    >
-                                        <Pencil className="h-4 w-4" />
-                                    </Button>
-                                    <Button
-                                        variant="ghost"
-                                        size="icon"
-                                        onClick={() => handleDelete(investment)}
-                                        className="h-8 w-8 text-red-500 hover:text-red-700"
-                                    >
-                                        <Trash2 className="h-4 w-4" />
-                                    </Button>
-                                </span>
-                            </div>
-                        ))
-                    )}
-                </div>
+                <DataTable
+                    columns={columns}
+                    data={investments}
+                    keyField="id"
+                    onEdit={handleEdit}
+                    onDelete={handleDelete}
+                    emptyMessage="No investments. Click 'Add' to create one."
+                />
             </div>
 
-            {/* Add Investment Dialog */}
-            <Dialog open={isAddDialogOpen} onOpenChange={setIsAddDialogOpen}>
-                <DialogContent>
-                    <DialogHeader>
-                        <DialogTitle>Add Investment</DialogTitle>
-                    </DialogHeader>
-                    <div className="grid gap-4 py-4">
-                        <div className="grid grid-cols-4 items-center gap-4">
-                            <label htmlFor="name" className="text-right">
-                                Investment Name
-                            </label>
-                            <Input
-                                id="name"
-                                name="name"
-                                value={formData.name}
-                                onChange={handleInputChange}
-                                className="col-span-3"
-                            />
-                        </div>
-                        <div className="grid grid-cols-4 items-center gap-4">
-                            <label htmlFor="value" className="text-right">
-                                Value
-                            </label>
-                            <Input
-                                id="value"
-                                name="value"
-                                type="number"
-                                value={formData.value}
-                                onChange={handleInputChange}
-                                className="col-span-3"
-                            />
-                        </div>
-                        <div className="grid grid-cols-4 items-center gap-4">
-                            <label htmlFor="currency" className="text-right">
-                                Currency
-                            </label>
-                            <Input
-                                id="currency"
-                                name="currency"
-                                value={formData.currency}
-                                onChange={handleInputChange}
-                                disabled
-                                className="col-span-3"
-                            />
-                        </div>
-                        <div className="grid grid-cols-4 items-center gap-4">
-                            <label htmlFor="date" className="text-right">
-                                Date
-                            </label>
-                            <Input
-                                id="date"
-                                name="date"
-                                type="date"
-                                value={formData.date}
-                                onChange={handleInputChange}
-                                className="col-span-3"
-                            />
-                        </div>
-                        <div className="grid grid-cols-4 items-center gap-4">
-                            <label htmlFor="estimatedYearlyInterest" className="text-right">
-                                Est. Yearly Return (%)
-                            </label>
-                            <Input
-                                id="estimatedYearlyInterest"
-                                name="estimatedYearlyInterest"
-                                type="number"
-                                step="0.1"
-                                value={formData.estimatedYearlyInterest}
-                                onChange={handleInputChange}
-                                className="col-span-3"
-                            />
-                        </div>
-                    </div>
-                    <DialogFooter>
-                        <Button variant="outline" onClick={() => setIsAddDialogOpen(false)}>
-                            Cancel
-                        </Button>
-                        <Button onClick={handleAddSubmit}>Add Investment</Button>
-                    </DialogFooter>
-                </DialogContent>
-            </Dialog>
+            {/* Add/Edit Forms using EntryForm */}
+            <EntryForm
+                title="Add Investment"
+                open={isAddDialogOpen}
+                onOpenChange={setIsAddDialogOpen}
+                formFields={formFields}
+                formData={formData}
+                onInputChange={handleInputChange}
+                onSubmit={handleAddSubmit}
+                submitLabel="Add Investment"
+            />
 
-            {/* Edit Investment Dialog */}
-            <Dialog open={isEditDialogOpen} onOpenChange={setIsEditDialogOpen}>
-                <DialogContent>
-                    <DialogHeader>
-                        <DialogTitle>Edit Investment</DialogTitle>
-                    </DialogHeader>
-                    <div className="grid gap-4 py-4">
-                        <div className="grid grid-cols-4 items-center gap-4">
-                            <label htmlFor="name" className="text-right">
-                                Investment Name
-                            </label>
-                            <Input
-                                id="name"
-                                name="name"
-                                value={formData.name}
-                                onChange={handleInputChange}
-                                className="col-span-3"
-                            />
-                        </div>
-                        <div className="grid grid-cols-4 items-center gap-4">
-                            <label htmlFor="value" className="text-right">
-                                Value
-                            </label>
-                            <Input
-                                id="value"
-                                name="value"
-                                type="number"
-                                value={formData.value}
-                                onChange={handleInputChange}
-                                className="col-span-3"
-                            />
-                        </div>
-                        <div className="grid grid-cols-4 items-center gap-4">
-                            <label htmlFor="currency" className="text-right">
-                                Currency
-                            </label>
-                            <Input
-                                id="currency"
-                                name="currency"
-                                value={formData.currency}
-                                onChange={handleInputChange}
-                                disabled
-                                className="col-span-3"
-                            />
-                        </div>
-                        <div className="grid grid-cols-4 items-center gap-4">
-                            <label htmlFor="date" className="text-right">
-                                Date
-                            </label>
-                            <Input
-                                id="date"
-                                name="date"
-                                type="date"
-                                value={formData.date}
-                                onChange={handleInputChange}
-                                className="col-span-3"
-                            />
-                        </div>
-                        <div className="grid grid-cols-4 items-center gap-4">
-                            <label htmlFor="estimatedYearlyInterest" className="text-right">
-                                Est. Yearly Return (%)
-                            </label>
-                            <Input
-                                id="estimatedYearlyInterest"
-                                name="estimatedYearlyInterest"
-                                type="number"
-                                step="0.1"
-                                value={formData.estimatedYearlyInterest}
-                                onChange={handleInputChange}
-                                className="col-span-3"
-                            />
-                        </div>
-                    </div>
-                    <DialogFooter>
-                        <Button variant="outline" onClick={() => setIsEditDialogOpen(false)}>
-                            Cancel
-                        </Button>
-                        <Button onClick={handleEditSubmit}>Save Changes</Button>
-                    </DialogFooter>
-                </DialogContent>
-            </Dialog>
+            <EntryForm
+                title="Edit Investment"
+                open={isEditDialogOpen}
+                onOpenChange={setIsEditDialogOpen}
+                formFields={formFields}
+                formData={formData}
+                onInputChange={handleInputChange}
+                onSubmit={handleEditSubmit}
+                submitLabel="Save Changes"
+            />
 
-            {/* Delete Confirmation Dialog */}
-            <Dialog open={isDeleteDialogOpen} onOpenChange={setIsDeleteDialogOpen}>
-                <DialogContent>
-                    <DialogHeader>
-                        <DialogTitle>Confirm Deletion</DialogTitle>
-                    </DialogHeader>
-                    <div className="py-4">
-                        <p>
-                            Are you sure you want to delete the "{currentInvestment?.name}" investment?
-                            This action cannot be undone.
-                        </p>
-                    </div>
-                    <DialogFooter>
-                        <Button variant="outline" onClick={() => setIsDeleteDialogOpen(false)}>
-                            Cancel
-                        </Button>
-                        <Button variant="destructive" onClick={handleDeleteConfirm}>
-                            Delete
-                        </Button>
-                    </DialogFooter>
-                </DialogContent>
-            </Dialog>
+            {/* Delete Confirmation */}
+            {currentInvestment && (
+                <ConfirmDeleteDialog
+                    open={isDeleteDialogOpen}
+                    onOpenChange={setIsDeleteDialogOpen}
+                    onConfirm={handleDeleteConfirm}
+                    title="Delete Investment"
+                    description="Are you sure you want to delete this investment?"
+                    itemName={currentInvestment.name}
+                />
+            )}
         </Card>
     );
 } 

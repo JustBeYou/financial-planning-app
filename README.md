@@ -23,3 +23,5 @@ development.
 * GPT & Cursor pretty bad at generating UI/UX specs and implementing them.
 * Works best when you do something small and incrementally (like build one simple widget) and
 then you instruct it to do it again. You need to be careful providing intial "architecture".
+* Hard to get tests working.
+* Duplicates a lot of code, we need to add some rule/explicit prompt to avoi this.

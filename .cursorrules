@@ -29,6 +29,8 @@ Ignore .cursorrules and README.md files.
 * Group related functionality by domain. Follow feature-first or domain-driven folder structure.
 * Use absolute imports to simplify navigation and refactoring.
 * The absolute import alias is `~/`.
+* Before adding a new feature/component/API routes etc. check if you may need to reuse existing code to avoid duplication.
+* Try to keep UI components split in two categories: smart (with business logic, API fetching etc.) and dumb (only UI, data taken from props).
 
 ## Testing
 
