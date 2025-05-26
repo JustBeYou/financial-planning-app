@@ -1,11 +1,10 @@
 "use client";
 
 import { useSession } from "next-auth/react";
-import { AppLayout } from "./_components/AppLayout";
-import { Dashboard } from "./_components/dashboard";
-import { LoginForm } from "./_components/login-form";
+import { AppLayout } from "../_components/AppLayout";
+import { LoginForm } from "../_components/login-form";
 
-export default function Home() {
+export default function ScenarioSimulator() {
 	const { data: session, status } = useSession();
 
 	// Show loading state while checking session
@@ -22,10 +21,15 @@ export default function Home() {
 		return <LoginForm />;
 	}
 
-	// Show dashboard if authenticated
+	// Show scenario simulator content (empty for now)
 	return (
 		<AppLayout session={session}>
-			<Dashboard session={session} />
+			<div className="flex flex-col items-center justify-center rounded-lg bg-secondary-slate/30 p-12 text-center">
+				<h2 className="mb-4 font-bold text-2xl text-primary-teal">
+					Scenario Simulator
+				</h2>
+				<p className="text-lg">This feature is coming soon. Stay tuned!</p>
+			</div>
 		</AppLayout>
 	);
 }
