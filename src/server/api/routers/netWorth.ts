@@ -1,24 +1,87 @@
+import { eq, sql } from "drizzle-orm";
 import { z } from "zod";
-import { createTRPCRouter, publicProcedure } from "~/server/api/trpc";
-
-// Mock data for the net worth widget
-const mockNetWorthData = {
-	total: 250000,
-	categories: [
-		{ name: "Cash & Deposits", value: 50000, color: "#4CAF50" },
-		{ name: "Investments", value: 150000, color: "#2196F3" },
-		{ name: "Real Estate", value: 300000, color: "#FF9800" },
-		{ name: "Debt", value: -250000, color: "#F44336" },
-	],
-};
+import { createTRPCRouter, protectedProcedure } from "~/server/api/trpc";
+import { db } from "~/server/db";
+import {
+	cashEntries,
+	debtEntries,
+	depositEntries,
+	investments,
+	realEstateEntries,
+} from "~/server/db/schema";
 
 export const netWorthRouter = createTRPCRouter({
 	/**
-	 * Get net worth data
+	 * Get net worth data by aggregating values from all financial categories
 	 */
-	getData: publicProcedure.query(() => {
-		// For now, return the mock data
-		// This will be replaced with actual database queries later
-		return mockNetWorthData;
+	getData: protectedProcedure.query(async ({ ctx }) => {
+		const userId = ctx.session.user.id;
+
+		// Get sum of cash entries
+		const cashResult = await db
+			.select({
+				total: sql`sum(${cashEntries.amount})`.mapWith(Number),
+			})
+			.from(cashEntries)
+			.where(eq(cashEntries.userId, userId));
+		const cashTotal = cashResult[0]?.total ?? 0;
+
+		// Get sum of investments
+		const investmentsResult = await db
+			.select({
+				total: sql`sum(${investments.value})`.mapWith(Number),
+			})
+			.from(investments)
+			.where(eq(investments.userId, userId));
+		const investmentsTotal = investmentsResult[0]?.total ?? 0;
+
+		// Get sum of real estate
+		const realEstateResult = await db
+			.select({
+				total: sql`sum(${realEstateEntries.value})`.mapWith(Number),
+			})
+			.from(realEstateEntries)
+			.where(eq(realEstateEntries.userId, userId));
+		const realEstateTotal = realEstateResult[0]?.total ?? 0;
+
+		// Get sum of deposits
+		const depositsResult = await db
+			.select({
+				total: sql`sum(${depositEntries.amount})`.mapWith(Number),
+			})
+			.from(depositEntries)
+			.where(eq(depositEntries.userId, userId));
+		const depositsTotal = depositsResult[0]?.total ?? 0;
+
+		// Get sum of debt (negative value for net worth)
+		const debtResult = await db
+			.select({
+				total: sql`sum(${debtEntries.amount})`.mapWith(Number),
+			})
+			.from(debtEntries)
+			.where(eq(debtEntries.userId, userId));
+		const debtTotal = debtResult[0]?.total ?? 0;
+
+		// Calculate total net worth
+		const totalNetWorth =
+			cashTotal +
+			investmentsTotal +
+			realEstateTotal +
+			depositsTotal -
+			debtTotal;
+
+		return {
+			total: totalNetWorth,
+			categories: [
+				{
+					name: "Cash & Deposits",
+					value: cashTotal + depositsTotal,
+					color: "#4CAF50",
+				},
+				{ name: "Investments", value: investmentsTotal, color: "#2196F3" },
+				{ name: "Real Estate", value: realEstateTotal, color: "#FF9800" },
+				{ name: "Debt", value: -debtTotal, color: "#F44336" },
+			],
+		};
 	}),
 });

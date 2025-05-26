@@ -25,6 +25,10 @@ export const users = createTable("user", (d) => ({
 
 export const usersRelations = relations(users, ({ many }) => ({
 	cashEntries: many(cashEntries),
+	investments: many(investments),
+	realEstateEntries: many(realEstateEntries),
+	debtEntries: many(debtEntries),
+	depositEntries: many(depositEntries),
 }));
 
 /**
@@ -50,4 +54,115 @@ export const cashEntries = createTable("cash_entry", (d) => ({
 
 export const cashEntriesRelations = relations(cashEntries, ({ one }) => ({
 	user: one(users, { fields: [cashEntries.userId], references: [users.id] }),
+}));
+
+/**
+ * Investments table for storing investment portfolio data
+ */
+export const investments = createTable("investment", (d) => ({
+	id: d.integer("id").primaryKey({ autoIncrement: true }),
+	userId: d
+		.text("user_id")
+		.notNull()
+		.references(() => users.id),
+	name: d.text("name").notNull(),
+	value: d.integer("value").notNull(),
+	currency: d.text("currency").notNull().default("RON"),
+	date: d.text("date").notNull(),
+	estimatedYearlyInterest: d.integer("estimated_yearly_interest").notNull(),
+	createdAt: d
+		.integer("created_at", { mode: "timestamp" })
+		.default(sql`(unixepoch())`),
+	updatedAt: d
+		.integer("updated_at", { mode: "timestamp" })
+		.default(sql`(unixepoch())`),
+}));
+
+export const investmentsRelations = relations(investments, ({ one }) => ({
+	user: one(users, { fields: [investments.userId], references: [users.id] }),
+}));
+
+/**
+ * Real Estate entries table for storing property data
+ */
+export const realEstateEntries = createTable("real_estate_entry", (d) => ({
+	id: d.integer("id").primaryKey({ autoIncrement: true }),
+	userId: d
+		.text("user_id")
+		.notNull()
+		.references(() => users.id),
+	name: d.text("name").notNull(),
+	value: d.integer("value").notNull(),
+	currency: d.text("currency").notNull().default("RON"),
+	date: d.text("date").notNull(),
+	createdAt: d
+		.integer("created_at", { mode: "timestamp" })
+		.default(sql`(unixepoch())`),
+	updatedAt: d
+		.integer("updated_at", { mode: "timestamp" })
+		.default(sql`(unixepoch())`),
+}));
+
+export const realEstateEntriesRelations = relations(
+	realEstateEntries,
+	({ one }) => ({
+		user: one(users, {
+			fields: [realEstateEntries.userId],
+			references: [users.id],
+		}),
+	}),
+);
+
+/**
+ * Debt entries table for storing debt/loan data
+ */
+export const debtEntries = createTable("debt_entry", (d) => ({
+	id: d.integer("id").primaryKey({ autoIncrement: true }),
+	userId: d
+		.text("user_id")
+		.notNull()
+		.references(() => users.id),
+	name: d.text("name").notNull(),
+	amount: d.integer("amount").notNull(),
+	currency: d.text("currency").notNull().default("RON"),
+	interestRate: d.integer("interest_rate").notNull(),
+	lengthMonths: d.integer("length_months").notNull(),
+	createdAt: d
+		.integer("created_at", { mode: "timestamp" })
+		.default(sql`(unixepoch())`),
+	updatedAt: d
+		.integer("updated_at", { mode: "timestamp" })
+		.default(sql`(unixepoch())`),
+}));
+
+export const debtEntriesRelations = relations(debtEntries, ({ one }) => ({
+	user: one(users, { fields: [debtEntries.userId], references: [users.id] }),
+}));
+
+/**
+ * Deposit entries table for storing bank deposit data
+ */
+export const depositEntries = createTable("deposit_entry", (d) => ({
+	id: d.integer("id").primaryKey({ autoIncrement: true }),
+	userId: d
+		.text("user_id")
+		.notNull()
+		.references(() => users.id),
+	bankName: d.text("bank_name").notNull(),
+	amount: d.integer("amount").notNull(),
+	currency: d.text("currency").notNull().default("RON"),
+	startDate: d.text("start_date").notNull(),
+	interest: d.integer("interest").notNull(),
+	lengthMonths: d.integer("length_months").notNull(),
+	maturityDate: d.text("maturity_date").notNull(),
+	createdAt: d
+		.integer("created_at", { mode: "timestamp" })
+		.default(sql`(unixepoch())`),
+	updatedAt: d
+		.integer("updated_at", { mode: "timestamp" })
+		.default(sql`(unixepoch())`),
+}));
+
+export const depositEntriesRelations = relations(depositEntries, ({ one }) => ({
+	user: one(users, { fields: [depositEntries.userId], references: [users.id] }),
 }));

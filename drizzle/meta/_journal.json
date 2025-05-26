@@ -8,6 +8,13 @@
 			"when": 1748278520729,
 			"tag": "0000_petite_lorna_dane",
 			"breakpoints": true
+		},
+		{
+			"idx": 1,
+			"version": "6",
+			"when": 1748279403516,
+			"tag": "0001_flimsy_master_chief",
+			"breakpoints": true
 		}
 	]
 }

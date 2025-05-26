@@ -1,58 +1,8 @@
+import { and, eq } from "drizzle-orm";
 import { z } from "zod";
-import { createTRPCRouter, publicProcedure } from "~/server/api/trpc";
-
-// Mock data for the investments widget
-let mockInvestments = [
-	{
-		id: 1,
-		name: "Stock Portfolio",
-		value: 75000,
-		currency: "RON",
-		date: "2023-11-30",
-		estimatedYearlyInterest: 8.5,
-	},
-	{
-		id: 2,
-		name: "Index Fund",
-		value: 120000,
-		currency: "RON",
-		date: "2023-11-28",
-		estimatedYearlyInterest: 7.2,
-	},
-	{
-		id: 3,
-		name: "Corporate Bonds",
-		value: 50000,
-		currency: "RON",
-		date: "2023-10-15",
-		estimatedYearlyInterest: 5.8,
-	},
-	{
-		id: 4,
-		name: "Real Estate Fund",
-		value: 200000,
-		currency: "RON",
-		date: "2023-09-01",
-		estimatedYearlyInterest: 6.5,
-	},
-	{
-		id: 5,
-		name: "Cryptocurrency",
-		value: 30000,
-		currency: "RON",
-		date: "2023-11-15",
-		estimatedYearlyInterest: 12.0,
-	},
-];
-
-// Helper function to generate a new ID
-const generateNewId = () => {
-	const maxId = mockInvestments.reduce(
-		(max, investment) => (investment.id > max ? investment.id : max),
-		0,
-	);
-	return maxId + 1;
-};
+import { createTRPCRouter, protectedProcedure } from "~/server/api/trpc";
+import { db } from "~/server/db";
+import { investments } from "~/server/db/schema";
 
 // Input schemas for validation
 const investmentCreateSchema = z.object({
@@ -84,58 +34,144 @@ export const investmentsRouter = createTRPCRouter({
 	/**
 	 * Get investments data
 	 */
-	getData: publicProcedure.query(() => {
-		// For now, return the mock data
-		// This will be replaced with actual database queries later
-		return mockInvestments;
+	getData: protectedProcedure.query(async ({ ctx }) => {
+		const entries = await db
+			.select()
+			.from(investments)
+			.where(eq(investments.userId, ctx.session.user.id));
+
+		return entries.map((entry) => ({
+			...entry,
+			// Convert numeric values back to actual decimal values
+			value: entry.value,
+			estimatedYearlyInterest: entry.estimatedYearlyInterest,
+		}));
 	}),
 
 	/**
 	 * Create a new investment
 	 */
-	create: publicProcedure
+	create: protectedProcedure
 		.input(investmentCreateSchema)
-		.mutation(({ input }) => {
-			const newInvestment = {
-				id: generateNewId(),
-				...input,
+		.mutation(async ({ ctx, input }) => {
+			const result = await db
+				.insert(investments)
+				.values({
+					userId: ctx.session.user.id,
+					name: input.name,
+					value: input.value,
+					currency: input.currency,
+					date: input.date,
+					estimatedYearlyInterest: input.estimatedYearlyInterest,
+				})
+				.returning();
+
+			const newEntry = result[0];
+			if (!newEntry) {
+				throw new Error("Failed to create investment");
+			}
+
+			return {
+				...newEntry,
+				// Convert numeric values back to actual decimal values
+				value: newEntry.value,
+				estimatedYearlyInterest: newEntry.estimatedYearlyInterest,
 			};
-			mockInvestments.push(newInvestment);
-			return newInvestment;
 		}),
 
 	/**
 	 * Update an existing investment
 	 */
-	update: publicProcedure
+	update: protectedProcedure
 		.input(investmentUpdateSchema)
-		.mutation(({ input }) => {
-			const index = mockInvestments.findIndex(
-				(investment) => investment.id === input.id,
-			);
-			if (index === -1) {
+		.mutation(async ({ ctx, input }) => {
+			// First verify the entry belongs to the user
+			const entryExists = await db
+				.select({ id: investments.id })
+				.from(investments)
+				.where(
+					and(
+						eq(investments.id, input.id),
+						eq(investments.userId, ctx.session.user.id),
+					),
+				)
+				.limit(1);
+
+			if (!entryExists.length) {
+				throw new Error("Investment not found or not owned by user");
+			}
+
+			const result = await db
+				.update(investments)
+				.set({
+					name: input.name,
+					value: input.value,
+					currency: input.currency,
+					date: input.date,
+					estimatedYearlyInterest: input.estimatedYearlyInterest,
+					updatedAt: new Date(),
+				})
+				.where(
+					and(
+						eq(investments.id, input.id),
+						eq(investments.userId, ctx.session.user.id),
+					),
+				)
+				.returning();
+
+			const updatedEntry = result[0];
+			if (!updatedEntry) {
 				throw new Error("Investment not found");
 			}
-			mockInvestments[index] = input;
-			return input;
+
+			return {
+				...updatedEntry,
+				// Convert numeric values back to actual decimal values
+				value: updatedEntry.value,
+				estimatedYearlyInterest: updatedEntry.estimatedYearlyInterest,
+			};
 		}),
 
 	/**
 	 * Delete an investment
 	 */
-	delete: publicProcedure
+	delete: protectedProcedure
 		.input(investmentDeleteSchema)
-		.mutation(({ input }) => {
-			const index = mockInvestments.findIndex(
-				(investment) => investment.id === input.id,
-			);
-			if (index === -1) {
+		.mutation(async ({ ctx, input }) => {
+			const entryToDelete = await db
+				.select()
+				.from(investments)
+				.where(
+					and(
+						eq(investments.id, input.id),
+						eq(investments.userId, ctx.session.user.id),
+					),
+				)
+				.limit(1);
+
+			if (!entryToDelete.length) {
+				throw new Error("Investment not found or not owned by user");
+			}
+
+			await db
+				.delete(investments)
+				.where(
+					and(
+						eq(investments.id, input.id),
+						eq(investments.userId, ctx.session.user.id),
+					),
+				);
+
+			const deletedEntry = entryToDelete[0];
+			if (!deletedEntry) {
 				throw new Error("Investment not found");
 			}
-			const deleted = mockInvestments[index];
-			mockInvestments = mockInvestments.filter(
-				(investment) => investment.id !== input.id,
-			);
-			return deleted;
+
+			return {
+				...deletedEntry,
+				// Convert numeric values back to actual decimal values
+				value: deletedEntry.value,
+				estimatedYearlyInterest: deletedEntry.estimatedYearlyInterest,
+			};
 		}),
 });

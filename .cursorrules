@@ -22,6 +22,9 @@ Ignore .cursorrules and README.md files.
 ## Tooling
 
 * Use **Biome** for linting and formatting.
+* Use the command from `package.json` when necessary. Check for commands existing there before
+ adding new packages or using npx.
+* You need to use `set -a && source .env && npm run db:sed` when seeding the local db.
 
 ## Code Organization
 

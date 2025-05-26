@@ -1,46 +1,8 @@
+import { and, eq } from "drizzle-orm";
 import { z } from "zod";
-import { createTRPCRouter, publicProcedure } from "~/server/api/trpc";
-
-// Mock data for the real estate widget
-let mockRealEstate = [
-	{
-		id: 1,
-		name: "Primary Residence",
-		value: 450000,
-		currency: "RON",
-		date: "2023-10-15",
-	},
-	{
-		id: 2,
-		name: "Rental Apartment",
-		value: 320000,
-		currency: "RON",
-		date: "2023-11-01",
-	},
-	{
-		id: 3,
-		name: "Vacation Property",
-		value: 280000,
-		currency: "RON",
-		date: "2023-09-20",
-	},
-	{
-		id: 4,
-		name: "Land Investment",
-		value: 150000,
-		currency: "RON",
-		date: "2023-08-05",
-	},
-];
-
-// Helper function to generate a new ID
-const generateNewId = () => {
-	const maxId = mockRealEstate.reduce(
-		(max, property) => (property.id > max ? property.id : max),
-		0,
-	);
-	return maxId + 1;
-};
+import { createTRPCRouter, protectedProcedure } from "~/server/api/trpc";
+import { db } from "~/server/db";
+import { realEstateEntries } from "~/server/db/schema";
 
 // Input schemas for validation
 const propertyCreateSchema = z.object({
@@ -66,52 +28,138 @@ export const realEstateRouter = createTRPCRouter({
 	/**
 	 * Get real estate data
 	 */
-	getData: publicProcedure.query(() => {
-		// For now, return the mock data
-		// This will be replaced with actual database queries later
-		return mockRealEstate;
+	getData: protectedProcedure.query(async ({ ctx }) => {
+		const entries = await db
+			.select()
+			.from(realEstateEntries)
+			.where(eq(realEstateEntries.userId, ctx.session.user.id));
+
+		return entries.map((entry) => ({
+			...entry,
+			// Convert numeric value back to actual decimal value
+			value: entry.value,
+		}));
 	}),
 
 	/**
 	 * Create a new property
 	 */
-	create: publicProcedure.input(propertyCreateSchema).mutation(({ input }) => {
-		const newProperty = {
-			id: generateNewId(),
-			...input,
-		};
-		mockRealEstate.push(newProperty);
-		return newProperty;
-	}),
+	create: protectedProcedure
+		.input(propertyCreateSchema)
+		.mutation(async ({ ctx, input }) => {
+			const result = await db
+				.insert(realEstateEntries)
+				.values({
+					userId: ctx.session.user.id,
+					name: input.name,
+					value: input.value,
+					currency: input.currency,
+					date: input.date,
+				})
+				.returning();
+
+			const newEntry = result[0];
+			if (!newEntry) {
+				throw new Error("Failed to create property");
+			}
+
+			return {
+				...newEntry,
+				// Convert numeric value back to actual decimal value
+				value: newEntry.value,
+			};
+		}),
 
 	/**
 	 * Update an existing property
 	 */
-	update: publicProcedure.input(propertyUpdateSchema).mutation(({ input }) => {
-		const index = mockRealEstate.findIndex(
-			(property) => property.id === input.id,
-		);
-		if (index === -1) {
-			throw new Error("Property not found");
-		}
-		mockRealEstate[index] = input;
-		return input;
-	}),
+	update: protectedProcedure
+		.input(propertyUpdateSchema)
+		.mutation(async ({ ctx, input }) => {
+			// First verify the entry belongs to the user
+			const entryExists = await db
+				.select({ id: realEstateEntries.id })
+				.from(realEstateEntries)
+				.where(
+					and(
+						eq(realEstateEntries.id, input.id),
+						eq(realEstateEntries.userId, ctx.session.user.id),
+					),
+				)
+				.limit(1);
+
+			if (!entryExists.length) {
+				throw new Error("Property not found or not owned by user");
+			}
+
+			const result = await db
+				.update(realEstateEntries)
+				.set({
+					name: input.name,
+					value: input.value,
+					currency: input.currency,
+					date: input.date,
+					updatedAt: new Date(),
+				})
+				.where(
+					and(
+						eq(realEstateEntries.id, input.id),
+						eq(realEstateEntries.userId, ctx.session.user.id),
+					),
+				)
+				.returning();
+
+			const updatedEntry = result[0];
+			if (!updatedEntry) {
+				throw new Error("Property not found");
+			}
+
+			return {
+				...updatedEntry,
+				// Convert numeric value back to actual decimal value
+				value: updatedEntry.value,
+			};
+		}),
 
 	/**
 	 * Delete a property
 	 */
-	delete: publicProcedure.input(propertyDeleteSchema).mutation(({ input }) => {
-		const index = mockRealEstate.findIndex(
-			(property) => property.id === input.id,
-		);
-		if (index === -1) {
-			throw new Error("Property not found");
-		}
-		const deleted = mockRealEstate[index];
-		mockRealEstate = mockRealEstate.filter(
-			(property) => property.id !== input.id,
-		);
-		return deleted;
-	}),
+	delete: protectedProcedure
+		.input(propertyDeleteSchema)
+		.mutation(async ({ ctx, input }) => {
+			const entryToDelete = await db
+				.select()
+				.from(realEstateEntries)
+				.where(
+					and(
+						eq(realEstateEntries.id, input.id),
+						eq(realEstateEntries.userId, ctx.session.user.id),
+					),
+				)
+				.limit(1);
+
+			if (!entryToDelete.length) {
+				throw new Error("Property not found or not owned by user");
+			}
+
+			await db
+				.delete(realEstateEntries)
+				.where(
+					and(
+						eq(realEstateEntries.id, input.id),
+						eq(realEstateEntries.userId, ctx.session.user.id),
+					),
+				);
+
+			const deletedEntry = entryToDelete[0];
+			if (!deletedEntry) {
+				throw new Error("Property not found");
+			}
+
+			return {
+				...deletedEntry,
+				// Convert numeric value back to actual decimal value
+				value: deletedEntry.value,
+			};
+		}),
 });

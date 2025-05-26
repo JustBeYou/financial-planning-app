@@ -1,49 +1,8 @@
+import { and, eq } from "drizzle-orm";
 import { z } from "zod";
-import { createTRPCRouter, publicProcedure } from "~/server/api/trpc";
-
-// Mock data for the deposits widget
-let mockDeposits = [
-	{
-		id: 1,
-		bankName: "First Bank",
-		amount: 50000,
-		currency: "RON",
-		startDate: "2023-10-01",
-		interest: 5.25,
-		lengthMonths: 12,
-		maturityDate: "2024-10-01",
-	},
-	{
-		id: 2,
-		bankName: "Credit Union",
-		amount: 25000,
-		currency: "RON",
-		startDate: "2023-11-15",
-		interest: 4.75,
-		lengthMonths: 6,
-		maturityDate: "2024-05-15",
-	},
-	{
-		id: 3,
-		bankName: "National Bank",
-		amount: 100000,
-		currency: "RON",
-		startDate: "2023-09-10",
-		interest: 6.0,
-		lengthMonths: 24,
-		maturityDate: "2025-09-10",
-	},
-	{
-		id: 4,
-		bankName: "City Bank",
-		amount: 30000,
-		currency: "RON",
-		startDate: "2023-12-01",
-		interest: 5.5,
-		lengthMonths: 18,
-		maturityDate: "2025-06-01",
-	},
-];
+import { createTRPCRouter, protectedProcedure } from "~/server/api/trpc";
+import { db } from "~/server/db";
+import { depositEntries } from "~/server/db/schema";
 
 // Helper function to calculate maturity date
 const calculateMaturityDate = (
@@ -52,16 +11,13 @@ const calculateMaturityDate = (
 ): string => {
 	const date = new Date(startDate);
 	date.setMonth(date.getMonth() + lengthMonths);
-	return date.toISOString().split("T")[0];
-};
 
-// Helper function to generate a new ID
-const generateNewId = () => {
-	const maxId = mockDeposits.reduce(
-		(max, deposit) => (deposit.id > max ? deposit.id : max),
-		0,
-	);
-	return maxId + 1;
+	// Format as YYYY-MM-DD manually to avoid potential undefined
+	const year = date.getFullYear();
+	const month = String(date.getMonth() + 1).padStart(2, "0");
+	const day = String(date.getDate()).padStart(2, "0");
+
+	return `${year}-${month}-${day}`;
 };
 
 // Input schemas for validation
@@ -92,64 +48,158 @@ export const depositsRouter = createTRPCRouter({
 	/**
 	 * Get deposits data
 	 */
-	getData: publicProcedure.query(() => {
-		// For now, return the mock data
-		// This will be replaced with actual database queries later
-		return mockDeposits;
+	getData: protectedProcedure.query(async ({ ctx }) => {
+		const entries = await db
+			.select()
+			.from(depositEntries)
+			.where(eq(depositEntries.userId, ctx.session.user.id));
+
+		return entries.map((entry) => ({
+			...entry,
+			// Convert numeric values back to actual decimal values
+			amount: entry.amount,
+			interest: entry.interest,
+		}));
 	}),
 
 	/**
 	 * Create a new deposit
 	 */
-	create: publicProcedure.input(depositCreateSchema).mutation(({ input }) => {
-		const maturityDate = calculateMaturityDate(
-			input.startDate,
-			input.lengthMonths,
-		);
+	create: protectedProcedure
+		.input(depositCreateSchema)
+		.mutation(async ({ ctx, input }) => {
+			const maturityDate = calculateMaturityDate(
+				input.startDate,
+				input.lengthMonths,
+			);
 
-		const newDeposit = {
-			id: generateNewId(),
-			...input,
-			maturityDate,
-		};
+			const result = await db
+				.insert(depositEntries)
+				.values({
+					userId: ctx.session.user.id,
+					bankName: input.bankName,
+					amount: input.amount,
+					currency: input.currency,
+					startDate: input.startDate,
+					interest: input.interest,
+					lengthMonths: input.lengthMonths,
+					maturityDate,
+				})
+				.returning();
 
-		mockDeposits.push(newDeposit);
-		return newDeposit;
-	}),
+			const newEntry = result[0];
+			if (!newEntry) {
+				throw new Error("Failed to create deposit entry");
+			}
+
+			return {
+				...newEntry,
+				// Convert numeric values back to actual decimal values
+				amount: newEntry.amount,
+				interest: newEntry.interest,
+			};
+		}),
 
 	/**
 	 * Update an existing deposit
 	 */
-	update: publicProcedure.input(depositUpdateSchema).mutation(({ input }) => {
-		const index = mockDeposits.findIndex((deposit) => deposit.id === input.id);
-		if (index === -1) {
-			throw new Error("Deposit not found");
-		}
+	update: protectedProcedure
+		.input(depositUpdateSchema)
+		.mutation(async ({ ctx, input }) => {
+			// First verify the entry belongs to the user
+			const entryExists = await db
+				.select({ id: depositEntries.id })
+				.from(depositEntries)
+				.where(
+					and(
+						eq(depositEntries.id, input.id),
+						eq(depositEntries.userId, ctx.session.user.id),
+					),
+				)
+				.limit(1);
 
-		const maturityDate = calculateMaturityDate(
-			input.startDate,
-			input.lengthMonths,
-		);
+			if (!entryExists.length) {
+				throw new Error("Deposit entry not found or not owned by user");
+			}
 
-		const updatedDeposit = {
-			...input,
-			maturityDate,
-		};
+			const maturityDate = calculateMaturityDate(
+				input.startDate,
+				input.lengthMonths,
+			);
 
-		mockDeposits[index] = updatedDeposit;
-		return updatedDeposit;
-	}),
+			const result = await db
+				.update(depositEntries)
+				.set({
+					bankName: input.bankName,
+					amount: input.amount,
+					currency: input.currency,
+					startDate: input.startDate,
+					interest: input.interest,
+					lengthMonths: input.lengthMonths,
+					maturityDate,
+					updatedAt: new Date(),
+				})
+				.where(
+					and(
+						eq(depositEntries.id, input.id),
+						eq(depositEntries.userId, ctx.session.user.id),
+					),
+				)
+				.returning();
+
+			const updatedEntry = result[0];
+			if (!updatedEntry) {
+				throw new Error("Deposit entry not found");
+			}
+
+			return {
+				...updatedEntry,
+				// Convert numeric values back to actual decimal values
+				amount: updatedEntry.amount,
+				interest: updatedEntry.interest,
+			};
+		}),
 
 	/**
 	 * Delete a deposit
 	 */
-	delete: publicProcedure.input(depositDeleteSchema).mutation(({ input }) => {
-		const index = mockDeposits.findIndex((deposit) => deposit.id === input.id);
-		if (index === -1) {
-			throw new Error("Deposit not found");
-		}
-		const deleted = mockDeposits[index];
-		mockDeposits = mockDeposits.filter((deposit) => deposit.id !== input.id);
-		return deleted;
-	}),
+	delete: protectedProcedure
+		.input(depositDeleteSchema)
+		.mutation(async ({ ctx, input }) => {
+			const entryToDelete = await db
+				.select()
+				.from(depositEntries)
+				.where(
+					and(
+						eq(depositEntries.id, input.id),
+						eq(depositEntries.userId, ctx.session.user.id),
+					),
+				)
+				.limit(1);
+
+			if (!entryToDelete.length) {
+				throw new Error("Deposit entry not found or not owned by user");
+			}
+
+			await db
+				.delete(depositEntries)
+				.where(
+					and(
+						eq(depositEntries.id, input.id),
+						eq(depositEntries.userId, ctx.session.user.id),
+					),
+				);
+
+			const deletedEntry = entryToDelete[0];
+			if (!deletedEntry) {
+				throw new Error("Deposit entry not found");
+			}
+
+			return {
+				...deletedEntry,
+				// Convert numeric values back to actual decimal values
+				amount: deletedEntry.amount,
+				interest: deletedEntry.interest,
+			};
+		}),
 });
