@@ -3,6 +3,8 @@
 import { signOut } from "next-auth/react";
 import type { Session } from "next-auth";
 import { NetWorthWidget } from "~/features/net-worth/components/NetWorthWidget";
+import { CashEntriesWidget } from "~/features/cash/components/CashEntriesWidget";
+import { DepositsWidget } from "~/features/deposits/components/DepositsWidget";
 
 interface DashboardProps {
     session: Session;
@@ -28,6 +30,8 @@ export function Dashboard({ session }: DashboardProps) {
                 {/* Widgets Grid */}
                 <div className="grid grid-cols-1 gap-6 lg:grid-cols-2 xl:grid-cols-3">
                     <NetWorthWidget />
+                    <CashEntriesWidget />
+                    <DepositsWidget />
                 </div>
             </div>
         </div>
