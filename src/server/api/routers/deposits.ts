@@ -2,7 +2,7 @@ import { z } from "zod";
 import { createTRPCRouter, publicProcedure } from "~/server/api/trpc";
 
 // Mock data for the deposits widget
-const mockDeposits = [
+let mockDeposits = [
 	{
 		id: 1,
 		bankName: "First Bank",
@@ -45,6 +45,46 @@ const mockDeposits = [
 	},
 ];
 
+// Helper function to calculate maturity date
+const calculateMaturityDate = (startDate: string, lengthMonths: number): string => {
+	const date = new Date(startDate);
+	date.setMonth(date.getMonth() + lengthMonths);
+	return date.toISOString().split("T")[0];
+};
+
+// Helper function to generate a new ID
+const generateNewId = () => {
+	const maxId = mockDeposits.reduce(
+		(max, deposit) => (deposit.id > max ? deposit.id : max),
+		0,
+	);
+	return maxId + 1;
+};
+
+// Input schemas for validation
+const depositCreateSchema = z.object({
+	bankName: z.string().min(1, "Bank name is required"),
+	amount: z.number().positive("Amount must be positive"),
+	currency: z.string().default("RON"),
+	startDate: z.string().min(1, "Start date is required"),
+	interest: z.number().min(0, "Interest rate must be non-negative"),
+	lengthMonths: z.number().positive("Length must be positive"),
+});
+
+const depositUpdateSchema = z.object({
+	id: z.number(),
+	bankName: z.string().min(1, "Bank name is required"),
+	amount: z.number().positive("Amount must be positive"),
+	currency: z.string(),
+	startDate: z.string().min(1, "Start date is required"),
+	interest: z.number().min(0, "Interest rate must be non-negative"),
+	lengthMonths: z.number().positive("Length must be positive"),
+});
+
+const depositDeleteSchema = z.object({
+	id: z.number(),
+});
+
 export const depositsRouter = createTRPCRouter({
 	/**
 	 * Get deposits data
@@ -54,4 +94,65 @@ export const depositsRouter = createTRPCRouter({
 		// This will be replaced with actual database queries later
 		return mockDeposits;
 	}),
+
+	/**
+	 * Create a new deposit
+	 */
+	create: publicProcedure
+		.input(depositCreateSchema)
+		.mutation(({ input }) => {
+			const maturityDate = calculateMaturityDate(
+				input.startDate,
+				input.lengthMonths,
+			);
+
+			const newDeposit = {
+				id: generateNewId(),
+				...input,
+				maturityDate,
+			};
+
+			mockDeposits.push(newDeposit);
+			return newDeposit;
+		}),
+
+	/**
+	 * Update an existing deposit
+	 */
+	update: publicProcedure
+		.input(depositUpdateSchema)
+		.mutation(({ input }) => {
+			const index = mockDeposits.findIndex((deposit) => deposit.id === input.id);
+			if (index === -1) {
+				throw new Error("Deposit not found");
+			}
+
+			const maturityDate = calculateMaturityDate(
+				input.startDate,
+				input.lengthMonths,
+			);
+
+			const updatedDeposit = {
+				...input,
+				maturityDate,
+			};
+
+			mockDeposits[index] = updatedDeposit;
+			return updatedDeposit;
+		}),
+
+	/**
+	 * Delete a deposit
+	 */
+	delete: publicProcedure
+		.input(depositDeleteSchema)
+		.mutation(({ input }) => {
+			const index = mockDeposits.findIndex((deposit) => deposit.id === input.id);
+			if (index === -1) {
+				throw new Error("Deposit not found");
+			}
+			const deleted = mockDeposits[index];
+			mockDeposits = mockDeposits.filter((deposit) => deposit.id !== input.id);
+			return deleted;
+		}),
 });

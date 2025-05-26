@@ -1,7 +1,7 @@
 "use client";
 
 import { PlusCircle } from "lucide-react";
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import { Button } from "~/components/ui/button";
 import { Card } from "~/components/ui/card";
 import { ConfirmDeleteDialog } from "~/components/ui/confirm-delete-dialog";
@@ -13,7 +13,6 @@ import {
 	formatCurrency,
 	formatDate,
 	formatPercentage,
-	generateNewId,
 	getTodayISODate,
 } from "~/lib/utils";
 import { api } from "~/trpc/react";
@@ -30,11 +29,26 @@ type Deposit = {
 };
 
 export function DepositsWidget() {
-	// Fetch initial deposits data from the API
-	const { data: initialDeposits, isLoading: isLoadingDeposits } =
+	// tRPC hooks
+	const utils = api.useUtils();
+	const { data: deposits, isLoading: isLoadingDeposits } =
 		api.deposits.getData.useQuery();
+	const createDeposit = api.deposits.create.useMutation({
+		onSuccess: () => {
+			void utils.deposits.getData.invalidate();
+		},
+	});
+	const updateDeposit = api.deposits.update.useMutation({
+		onSuccess: () => {
+			void utils.deposits.getData.invalidate();
+		},
+	});
+	const deleteDeposit = api.deposits.delete.useMutation({
+		onSuccess: () => {
+			void utils.deposits.getData.invalidate();
+		},
+	});
 
-	const [deposits, setDeposits] = useState<Deposit[]>([]);
 	const [isAddDialogOpen, setIsAddDialogOpen] = useState(false);
 	const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
 	const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
@@ -50,15 +64,8 @@ export function DepositsWidget() {
 		lengthMonths: 12,
 	});
 
-	// Update local state when data is loaded from the API
-	useEffect(() => {
-		if (initialDeposits) {
-			setDeposits(initialDeposits);
-		}
-	}, [initialDeposits]);
-
 	// If data is loading, show a loading state
-	if (isLoadingDeposits) {
+	if (isLoadingDeposits || !deposits) {
 		return (
 			<Card className="col-span-full p-6">
 				<h2 className="font-bold text-2xl">Term Deposits</h2>
@@ -108,18 +115,7 @@ export function DepositsWidget() {
 	};
 
 	const handleAddSubmit = () => {
-		const maturityDate = calculateDateFromMonths(
-			formData.startDate,
-			formData.lengthMonths,
-		);
-
-		const newDeposit = {
-			id: generateNewId(deposits),
-			...formData,
-			maturityDate,
-		};
-
-		setDeposits((prev) => [...prev, newDeposit]);
+		createDeposit.mutate(formData);
 		setIsAddDialogOpen(false);
 	};
 
@@ -134,18 +130,10 @@ export function DepositsWidget() {
 	const handleEditSubmit = () => {
 		if (!currentDeposit) return;
 
-		const maturityDate = calculateDateFromMonths(
-			formData.startDate,
-			formData.lengthMonths,
-		);
-
-		setDeposits((prev) =>
-			prev.map((deposit) =>
-				deposit.id === currentDeposit.id
-					? { ...deposit, ...formData, maturityDate }
-					: deposit,
-			),
-		);
+		updateDeposit.mutate({
+			id: currentDeposit.id,
+			...formData,
+		});
 		setIsEditDialogOpen(false);
 	};
 
@@ -158,9 +146,7 @@ export function DepositsWidget() {
 	const handleDeleteConfirm = () => {
 		if (!currentDeposit) return;
 
-		setDeposits((prev) =>
-			prev.filter((deposit) => deposit.id !== currentDeposit.id),
-		);
+		deleteDeposit.mutate({ id: currentDeposit.id });
 		setIsDeleteDialogOpen(false);
 	};
 

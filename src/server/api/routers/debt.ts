@@ -2,7 +2,7 @@ import { z } from "zod";
 import { createTRPCRouter, publicProcedure } from "~/server/api/trpc";
 
 // Mock data for the debt widget
-const mockDebts = [
+let mockDebts = [
 	{
 		id: 1,
 		name: "Mortgage",
@@ -45,6 +45,34 @@ const mockDebts = [
 	},
 ];
 
+// Input schemas for validation
+const debtCreateSchema = z.object({
+	name: z.string().min(1, "Name is required"),
+	amount: z.number().positive("Amount must be positive"),
+	currency: z.string().default("RON"),
+	interestRate: z.number().min(0, "Interest rate must be non-negative"),
+	lengthMonths: z.number().positive("Length must be positive"),
+});
+
+const debtUpdateSchema = z.object({
+	id: z.number(),
+	name: z.string().min(1, "Name is required"),
+	amount: z.number().positive("Amount must be positive"),
+	currency: z.string(),
+	interestRate: z.number().min(0, "Interest rate must be non-negative"),
+	lengthMonths: z.number().positive("Length must be positive"),
+});
+
+const debtDeleteSchema = z.object({
+	id: z.number(),
+});
+
+// Helper function to generate a new ID
+const generateNewId = () => {
+	const maxId = mockDebts.reduce((max, debt) => (debt.id > max ? debt.id : max), 0);
+	return maxId + 1;
+};
+
 export const debtRouter = createTRPCRouter({
 	/**
 	 * Get debt data
@@ -54,4 +82,47 @@ export const debtRouter = createTRPCRouter({
 		// This will be replaced with actual database queries later
 		return mockDebts;
 	}),
+
+	/**
+	 * Create a new debt
+	 */
+	create: publicProcedure
+		.input(debtCreateSchema)
+		.mutation(({ input }) => {
+			const newDebt = {
+				id: generateNewId(),
+				...input,
+			};
+			mockDebts.push(newDebt);
+			return newDebt;
+		}),
+
+	/**
+	 * Update an existing debt
+	 */
+	update: publicProcedure
+		.input(debtUpdateSchema)
+		.mutation(({ input }) => {
+			const index = mockDebts.findIndex((debt) => debt.id === input.id);
+			if (index === -1) {
+				throw new Error("Debt not found");
+			}
+			mockDebts[index] = input;
+			return input;
+		}),
+
+	/**
+	 * Delete a debt
+	 */
+	delete: publicProcedure
+		.input(debtDeleteSchema)
+		.mutation(({ input }) => {
+			const index = mockDebts.findIndex((debt) => debt.id === input.id);
+			if (index === -1) {
+				throw new Error("Debt not found");
+			}
+			const deleted = mockDebts[index];
+			mockDebts = mockDebts.filter((debt) => debt.id !== input.id);
+			return deleted;
+		}),
 });

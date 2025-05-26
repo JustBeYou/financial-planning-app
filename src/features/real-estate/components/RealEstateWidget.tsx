@@ -1,7 +1,7 @@
 "use client";
 
 import { PlusCircle } from "lucide-react";
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import { Button } from "~/components/ui/button";
 import { Card } from "~/components/ui/card";
 import { ConfirmDeleteDialog } from "~/components/ui/confirm-delete-dialog";
@@ -25,11 +25,26 @@ type Property = {
 };
 
 export function RealEstateWidget() {
-	// Fetch initial real estate data from the API
-	const { data: initialRealEstate, isLoading: isLoadingRealEstate } =
+	// tRPC hooks
+	const utils = api.useUtils();
+	const { data: properties, isLoading: isLoadingProperties } =
 		api.realEstate.getData.useQuery();
+	const createProperty = api.realEstate.create.useMutation({
+		onSuccess: () => {
+			void utils.realEstate.getData.invalidate();
+		},
+	});
+	const updateProperty = api.realEstate.update.useMutation({
+		onSuccess: () => {
+			void utils.realEstate.getData.invalidate();
+		},
+	});
+	const deleteProperty = api.realEstate.delete.useMutation({
+		onSuccess: () => {
+			void utils.realEstate.getData.invalidate();
+		},
+	});
 
-	const [properties, setProperties] = useState<Property[]>([]);
 	const [isAddDialogOpen, setIsAddDialogOpen] = useState(false);
 	const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
 	const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
@@ -41,15 +56,8 @@ export function RealEstateWidget() {
 		date: getTodayISODate(),
 	});
 
-	// Update local state when data is loaded from the API
-	useEffect(() => {
-		if (initialRealEstate) {
-			setProperties(initialRealEstate);
-		}
-	}, [initialRealEstate]);
-
 	// If data is loading, show a loading state
-	if (isLoadingRealEstate) {
+	if (isLoadingProperties || !properties) {
 		return (
 			<Card className="col-span-full p-6">
 				<h2 className="font-bold text-2xl">Real Estate Assets</h2>
@@ -84,12 +92,7 @@ export function RealEstateWidget() {
 	};
 
 	const handleAddSubmit = () => {
-		const newProperty = {
-			id: generateNewId(properties),
-			...formData,
-		};
-
-		setProperties((prev) => [...prev, newProperty]);
+		createProperty.mutate(formData);
 		setIsAddDialogOpen(false);
 	};
 
@@ -108,13 +111,10 @@ export function RealEstateWidget() {
 	const handleEditSubmit = () => {
 		if (!currentProperty) return;
 
-		setProperties((prev) =>
-			prev.map((property) =>
-				property.id === currentProperty.id
-					? { ...property, ...formData }
-					: property,
-			),
-		);
+		updateProperty.mutate({
+			id: currentProperty.id,
+			...formData,
+		});
 		setIsEditDialogOpen(false);
 	};
 
@@ -127,7 +127,7 @@ export function RealEstateWidget() {
 	const handleDeleteConfirm = () => {
 		if (!currentProperty) return;
 
-		setProperties((prev) => prev.filter((p) => p.id !== currentProperty.id));
+		deleteProperty.mutate({ id: currentProperty.id });
 		setIsDeleteDialogOpen(false);
 	};
 

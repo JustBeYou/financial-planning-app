@@ -1,7 +1,7 @@
 "use client";
 
 import { PlusCircle } from "lucide-react";
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import { Button } from "~/components/ui/button";
 import { Card } from "~/components/ui/card";
 import { ConfirmDeleteDialog } from "~/components/ui/confirm-delete-dialog";
@@ -11,7 +11,6 @@ import { StatCard } from "~/components/ui/stat-card";
 import {
 	formatCurrency,
 	formatDate,
-	generateNewId,
 	getTodayISODate,
 } from "~/lib/utils";
 import { api } from "~/trpc/react";
@@ -25,11 +24,26 @@ type CashEntry = {
 };
 
 export function CashEntriesWidget() {
-	// Fetch initial cash entries data from the API
-	const { data: initialCashEntries, isLoading: isLoadingCashEntries } =
+	// tRPC hooks
+	const utils = api.useUtils();
+	const { data: entries, isLoading: isLoadingEntries } =
 		api.cash.getData.useQuery();
+	const createEntry = api.cash.create.useMutation({
+		onSuccess: () => {
+			void utils.cash.getData.invalidate();
+		},
+	});
+	const updateEntry = api.cash.update.useMutation({
+		onSuccess: () => {
+			void utils.cash.getData.invalidate();
+		},
+	});
+	const deleteEntry = api.cash.delete.useMutation({
+		onSuccess: () => {
+			void utils.cash.getData.invalidate();
+		},
+	});
 
-	const [entries, setEntries] = useState<CashEntry[]>([]);
 	const [isAddDialogOpen, setIsAddDialogOpen] = useState(false);
 	const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
 	const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
@@ -41,15 +55,8 @@ export function CashEntriesWidget() {
 		date: getTodayISODate(),
 	});
 
-	// Update local state when data is loaded from the API
-	useEffect(() => {
-		if (initialCashEntries) {
-			setEntries(initialCashEntries);
-		}
-	}, [initialCashEntries]);
-
 	// If data is loading, show a loading state
-	if (isLoadingCashEntries) {
+	if (isLoadingEntries || !entries) {
 		return (
 			<Card className="col-span-full p-6">
 				<h2 className="font-bold text-2xl">Cash Entries</h2>
@@ -81,11 +88,7 @@ export function CashEntriesWidget() {
 	};
 
 	const handleAddSubmit = () => {
-		const newEntry = {
-			id: generateNewId(entries),
-			...formData,
-		};
-		setEntries((prev) => [...prev, newEntry]);
+		createEntry.mutate(formData);
 		setIsAddDialogOpen(false);
 	};
 
@@ -104,11 +107,10 @@ export function CashEntriesWidget() {
 	const handleEditSubmit = () => {
 		if (!currentEntry) return;
 
-		setEntries((prev) =>
-			prev.map((entry) =>
-				entry.id === currentEntry.id ? { ...entry, ...formData } : entry,
-			),
-		);
+		updateEntry.mutate({
+			id: currentEntry.id,
+			...formData,
+		});
 		setIsEditDialogOpen(false);
 	};
 
@@ -121,7 +123,7 @@ export function CashEntriesWidget() {
 	const handleDeleteConfirm = () => {
 		if (!currentEntry) return;
 
-		setEntries((prev) => prev.filter((entry) => entry.id !== currentEntry.id));
+		deleteEntry.mutate({ id: currentEntry.id });
 		setIsDeleteDialogOpen(false);
 	};
 

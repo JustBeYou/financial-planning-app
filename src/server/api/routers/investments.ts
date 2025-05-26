@@ -2,7 +2,7 @@ import { z } from "zod";
 import { createTRPCRouter, publicProcedure } from "~/server/api/trpc";
 
 // Mock data for the investments widget
-const mockInvestments = [
+let mockInvestments = [
 	{
 		id: 1,
 		name: "Stock Portfolio",
@@ -45,6 +45,37 @@ const mockInvestments = [
 	},
 ];
 
+// Helper function to generate a new ID
+const generateNewId = () => {
+	const maxId = mockInvestments.reduce(
+		(max, investment) => (investment.id > max ? investment.id : max),
+		0,
+	);
+	return maxId + 1;
+};
+
+// Input schemas for validation
+const investmentCreateSchema = z.object({
+	name: z.string().min(1, "Name is required"),
+	value: z.number().positive("Value must be positive"),
+	currency: z.string().default("RON"),
+	date: z.string().min(1, "Date is required"),
+	estimatedYearlyInterest: z.number().min(0, "Interest rate must be non-negative"),
+});
+
+const investmentUpdateSchema = z.object({
+	id: z.number(),
+	name: z.string().min(1, "Name is required"),
+	value: z.number().positive("Value must be positive"),
+	currency: z.string(),
+	date: z.string().min(1, "Date is required"),
+	estimatedYearlyInterest: z.number().min(0, "Interest rate must be non-negative"),
+});
+
+const investmentDeleteSchema = z.object({
+	id: z.number(),
+});
+
 export const investmentsRouter = createTRPCRouter({
 	/**
 	 * Get investments data
@@ -54,4 +85,47 @@ export const investmentsRouter = createTRPCRouter({
 		// This will be replaced with actual database queries later
 		return mockInvestments;
 	}),
+
+	/**
+	 * Create a new investment
+	 */
+	create: publicProcedure
+		.input(investmentCreateSchema)
+		.mutation(({ input }) => {
+			const newInvestment = {
+				id: generateNewId(),
+				...input,
+			};
+			mockInvestments.push(newInvestment);
+			return newInvestment;
+		}),
+
+	/**
+	 * Update an existing investment
+	 */
+	update: publicProcedure
+		.input(investmentUpdateSchema)
+		.mutation(({ input }) => {
+			const index = mockInvestments.findIndex((investment) => investment.id === input.id);
+			if (index === -1) {
+				throw new Error("Investment not found");
+			}
+			mockInvestments[index] = input;
+			return input;
+		}),
+
+	/**
+	 * Delete an investment
+	 */
+	delete: publicProcedure
+		.input(investmentDeleteSchema)
+		.mutation(({ input }) => {
+			const index = mockInvestments.findIndex((investment) => investment.id === input.id);
+			if (index === -1) {
+				throw new Error("Investment not found");
+			}
+			const deleted = mockInvestments[index];
+			mockInvestments = mockInvestments.filter((investment) => investment.id !== input.id);
+			return deleted;
+		}),
 });

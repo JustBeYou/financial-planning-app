@@ -2,7 +2,7 @@ import { z } from "zod";
 import { createTRPCRouter, publicProcedure } from "~/server/api/trpc";
 
 // Mock data for the real estate widget
-const mockRealEstate = [
+let mockRealEstate = [
 	{
 		id: 1,
 		name: "Primary Residence",
@@ -33,6 +33,35 @@ const mockRealEstate = [
 	},
 ];
 
+// Helper function to generate a new ID
+const generateNewId = () => {
+	const maxId = mockRealEstate.reduce(
+		(max, property) => (property.id > max ? property.id : max),
+		0,
+	);
+	return maxId + 1;
+};
+
+// Input schemas for validation
+const propertyCreateSchema = z.object({
+	name: z.string().min(1, "Name is required"),
+	value: z.number().positive("Value must be positive"),
+	currency: z.string().default("RON"),
+	date: z.string().min(1, "Date is required"),
+});
+
+const propertyUpdateSchema = z.object({
+	id: z.number(),
+	name: z.string().min(1, "Name is required"),
+	value: z.number().positive("Value must be positive"),
+	currency: z.string(),
+	date: z.string().min(1, "Date is required"),
+});
+
+const propertyDeleteSchema = z.object({
+	id: z.number(),
+});
+
 export const realEstateRouter = createTRPCRouter({
 	/**
 	 * Get real estate data
@@ -42,4 +71,47 @@ export const realEstateRouter = createTRPCRouter({
 		// This will be replaced with actual database queries later
 		return mockRealEstate;
 	}),
+
+	/**
+	 * Create a new property
+	 */
+	create: publicProcedure
+		.input(propertyCreateSchema)
+		.mutation(({ input }) => {
+			const newProperty = {
+				id: generateNewId(),
+				...input,
+			};
+			mockRealEstate.push(newProperty);
+			return newProperty;
+		}),
+
+	/**
+	 * Update an existing property
+	 */
+	update: publicProcedure
+		.input(propertyUpdateSchema)
+		.mutation(({ input }) => {
+			const index = mockRealEstate.findIndex((property) => property.id === input.id);
+			if (index === -1) {
+				throw new Error("Property not found");
+			}
+			mockRealEstate[index] = input;
+			return input;
+		}),
+
+	/**
+	 * Delete a property
+	 */
+	delete: publicProcedure
+		.input(propertyDeleteSchema)
+		.mutation(({ input }) => {
+			const index = mockRealEstate.findIndex((property) => property.id === input.id);
+			if (index === -1) {
+				throw new Error("Property not found");
+			}
+			const deleted = mockRealEstate[index];
+			mockRealEstate = mockRealEstate.filter((property) => property.id !== input.id);
+			return deleted;
+		}),
 });

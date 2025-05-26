@@ -12,7 +12,6 @@ import {
 	formatCurrency,
 	formatDate,
 	formatPercentage,
-	generateNewId,
 	getTodayISODate,
 } from "~/lib/utils";
 import { api } from "~/trpc/react";
@@ -27,11 +26,27 @@ type Debt = {
 };
 
 export function DebtWidget() {
-	// Fetch initial debt data from the API
-	const { data: initialDebts, isLoading: isLoadingDebts } =
+	// tRPC hooks
+	const utils = api.useUtils();
+	const { data: debts, isLoading: isLoadingDebts } =
 		api.debt.getData.useQuery();
+	const createDebt = api.debt.create.useMutation({
+		onSuccess: () => {
+			// Invalidate the getData query to refetch the data
+			void utils.debt.getData.invalidate();
+		},
+	});
+	const updateDebt = api.debt.update.useMutation({
+		onSuccess: () => {
+			void utils.debt.getData.invalidate();
+		},
+	});
+	const deleteDebt = api.debt.delete.useMutation({
+		onSuccess: () => {
+			void utils.debt.getData.invalidate();
+		},
+	});
 
-	const [debts, setDebts] = useState<Debt[]>([]);
 	const [isAddDialogOpen, setIsAddDialogOpen] = useState(false);
 	const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
 	const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
@@ -44,15 +59,8 @@ export function DebtWidget() {
 		lengthMonths: 0,
 	});
 
-	// Update local state when data is loaded from the API
-	useEffect(() => {
-		if (initialDebts) {
-			setDebts(initialDebts);
-		}
-	}, [initialDebts]);
-
 	// If data is loading, show a loading state
-	if (isLoadingDebts) {
+	if (isLoadingDebts || !debts) {
 		return (
 			<Card className="col-span-full p-6">
 				<h2 className="font-bold text-2xl">Debt Overview</h2>
@@ -99,12 +107,7 @@ export function DebtWidget() {
 	};
 
 	const handleAddSubmit = () => {
-		const newDebt = {
-			id: generateNewId(debts),
-			...formData,
-		};
-
-		setDebts((prev) => [...prev, newDebt]);
+		createDebt.mutate(formData);
 		setIsAddDialogOpen(false);
 	};
 
@@ -124,11 +127,10 @@ export function DebtWidget() {
 	const handleEditSubmit = () => {
 		if (!currentDebt) return;
 
-		setDebts((prev) =>
-			prev.map((debt) =>
-				debt.id === currentDebt.id ? { ...debt, ...formData } : debt,
-			),
-		);
+		updateDebt.mutate({
+			id: currentDebt.id,
+			...formData,
+		});
 		setIsEditDialogOpen(false);
 	};
 
@@ -141,7 +143,7 @@ export function DebtWidget() {
 	const handleDeleteConfirm = () => {
 		if (!currentDebt) return;
 
-		setDebts((prev) => prev.filter((d) => d.id !== currentDebt.id));
+		deleteDebt.mutate({ id: currentDebt.id });
 		setIsDeleteDialogOpen(false);
 	};
 

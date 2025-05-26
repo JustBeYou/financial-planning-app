@@ -1,7 +1,7 @@
 "use client";
 
 import { PlusCircle } from "lucide-react";
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import { Button } from "~/components/ui/button";
 import { Card } from "~/components/ui/card";
 import { ConfirmDeleteDialog } from "~/components/ui/confirm-delete-dialog";
@@ -12,7 +12,6 @@ import {
 	formatCurrency,
 	formatDate,
 	formatPercentage,
-	generateNewId,
 	getTodayISODate,
 } from "~/lib/utils";
 import { api } from "~/trpc/react";
@@ -27,11 +26,26 @@ type Investment = {
 };
 
 export function InvestmentsWidget() {
-	// Fetch initial investments data from the API
-	const { data: initialInvestments, isLoading: isLoadingInvestments } =
+	// tRPC hooks
+	const utils = api.useUtils();
+	const { data: investments, isLoading: isLoadingInvestments } =
 		api.investments.getData.useQuery();
+	const createInvestment = api.investments.create.useMutation({
+		onSuccess: () => {
+			void utils.investments.getData.invalidate();
+		},
+	});
+	const updateInvestment = api.investments.update.useMutation({
+		onSuccess: () => {
+			void utils.investments.getData.invalidate();
+		},
+	});
+	const deleteInvestment = api.investments.delete.useMutation({
+		onSuccess: () => {
+			void utils.investments.getData.invalidate();
+		},
+	});
 
-	const [investments, setInvestments] = useState<Investment[]>([]);
 	const [isAddDialogOpen, setIsAddDialogOpen] = useState(false);
 	const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
 	const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
@@ -46,15 +60,8 @@ export function InvestmentsWidget() {
 		estimatedYearlyInterest: 0,
 	});
 
-	// Update local state when data is loaded from the API
-	useEffect(() => {
-		if (initialInvestments) {
-			setInvestments(initialInvestments);
-		}
-	}, [initialInvestments]);
-
 	// If data is loading, show a loading state
-	if (isLoadingInvestments) {
+	if (isLoadingInvestments || !investments) {
 		return (
 			<Card className="col-span-full p-6">
 				<h2 className="font-bold text-2xl">Investments</h2>
@@ -106,12 +113,7 @@ export function InvestmentsWidget() {
 	};
 
 	const handleAddSubmit = () => {
-		const newInvestment = {
-			id: generateNewId(investments),
-			...formData,
-		};
-
-		setInvestments((prev) => [...prev, newInvestment]);
+		createInvestment.mutate(formData);
 		setIsAddDialogOpen(false);
 	};
 
@@ -131,13 +133,10 @@ export function InvestmentsWidget() {
 	const handleEditSubmit = () => {
 		if (!currentInvestment) return;
 
-		setInvestments((prev) =>
-			prev.map((investment) =>
-				investment.id === currentInvestment.id
-					? { ...investment, ...formData }
-					: investment,
-			),
-		);
+		updateInvestment.mutate({
+			id: currentInvestment.id,
+			...formData,
+		});
 		setIsEditDialogOpen(false);
 	};
 
@@ -150,9 +149,7 @@ export function InvestmentsWidget() {
 	const handleDeleteConfirm = () => {
 		if (!currentInvestment) return;
 
-		setInvestments((prev) =>
-			prev.filter((inv) => inv.id !== currentInvestment.id),
-		);
+		deleteInvestment.mutate({ id: currentInvestment.id });
 		setIsDeleteDialogOpen(false);
 	};
 
