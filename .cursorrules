@@ -34,6 +34,7 @@ Ignore .cursorrules and README.md files.
 * The absolute import alias is `~/`.
 * Before adding a new feature/component/API routes etc. check if you may need to reuse existing code to avoid duplication.
 * Try to keep UI components split in two categories: smart (with business logic, API fetching etc.) and dumb (only UI, data taken from props).
+* Try to keep files under 500 lines of code. Split code into reasonable modules/components when necessary.
 
 ## Testing
 
