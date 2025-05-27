@@ -26,6 +26,13 @@ const HARDCODED_USERS = [
 		username: "demo",
 		password: "demo123",
 	},
+	{
+		id: "4",
+		name: "littlewho",
+		email: "littlewho@example.com",
+		username: "littlewho",
+		password: "littlewho123",
+	},
 ];
 
 /**

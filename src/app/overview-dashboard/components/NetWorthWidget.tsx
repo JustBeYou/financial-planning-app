@@ -27,11 +27,8 @@ export function NetWorthWidget() {
 		);
 	}
 
-	// Calculate total net worth
-	const totalNetWorth = netWorthData.categories.reduce(
-		(sum, category) => sum + category.value,
-		0,
-	);
+	// Use the total value directly from the API response
+	const totalNetWorth = netWorthData.total;
 
 	return (
 		<Card className="col-span-full p-6">
@@ -40,7 +37,9 @@ export function NetWorthWidget() {
 			{/* Total Net Worth */}
 			<div className="mb-6">
 				<p className="text-sm text-text-gray">Total Net Worth</p>
-				<p className="font-bold text-3xl">${totalNetWorth.toLocaleString()}</p>
+				<p className="font-bold text-3xl">
+					{totalNetWorth.toLocaleString()} RON
+				</p>
 			</div>
 
 			{/* Category Breakdown */}
@@ -59,8 +58,11 @@ export function NetWorthWidget() {
 								/>
 								<span>{category.name}</span>
 							</div>
-							<span className="font-medium">
-								${category.value.toLocaleString()}
+							<span
+								className={`font-medium ${category.isNegative ? "text-accent-coral" : ""}`}
+							>
+								{category.isNegative ? "-" : ""}
+								{category.value.toLocaleString()} RON
 							</span>
 						</div>
 					))}

@@ -27,16 +27,19 @@ export function CashEntriesWidget() {
 	const createEntry = api.cash.create.useMutation({
 		onSuccess: () => {
 			void utils.cash.getData.invalidate();
+			void utils.netWorth.getData.invalidate();
 		},
 	});
 	const updateEntry = api.cash.update.useMutation({
 		onSuccess: () => {
 			void utils.cash.getData.invalidate();
+			void utils.netWorth.getData.invalidate();
 		},
 	});
 	const deleteEntry = api.cash.delete.useMutation({
 		onSuccess: () => {
 			void utils.cash.getData.invalidate();
+			void utils.netWorth.getData.invalidate();
 		},
 	});
 

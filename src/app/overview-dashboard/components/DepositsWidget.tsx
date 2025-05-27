@@ -36,16 +36,19 @@ export function DepositsWidget() {
 	const createDeposit = api.deposits.create.useMutation({
 		onSuccess: () => {
 			void utils.deposits.getData.invalidate();
+			void utils.netWorth.getData.invalidate();
 		},
 	});
 	const updateDeposit = api.deposits.update.useMutation({
 		onSuccess: () => {
 			void utils.deposits.getData.invalidate();
+			void utils.netWorth.getData.invalidate();
 		},
 	});
 	const deleteDeposit = api.deposits.delete.useMutation({
 		onSuccess: () => {
 			void utils.deposits.getData.invalidate();
+			void utils.netWorth.getData.invalidate();
 		},
 	});
 

@@ -29,6 +29,11 @@ const USERS = [
 		name: "Demo User",
 		email: "demo@example.com",
 	},
+	{
+		id: "4",
+		name: "littlewho",
+		email: "littlewho@example.com",
+	},
 ];
 
 // Get user IDs as constants to avoid type issues

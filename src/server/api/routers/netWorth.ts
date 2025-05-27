@@ -80,7 +80,7 @@ export const netWorthRouter = createTRPCRouter({
 				},
 				{ name: "Investments", value: investmentsTotal, color: "#2196F3" },
 				{ name: "Real Estate", value: realEstateTotal, color: "#FF9800" },
-				{ name: "Debt", value: -debtTotal, color: "#F44336" },
+				{ name: "Debt", value: debtTotal, color: "#F44336", isNegative: true },
 			],
 		};
 	}),

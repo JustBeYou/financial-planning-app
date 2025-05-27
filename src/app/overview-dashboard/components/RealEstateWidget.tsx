@@ -32,16 +32,19 @@ export function RealEstateWidget() {
 	const createProperty = api.realEstate.create.useMutation({
 		onSuccess: () => {
 			void utils.realEstate.getData.invalidate();
+			void utils.netWorth.getData.invalidate();
 		},
 	});
 	const updateProperty = api.realEstate.update.useMutation({
 		onSuccess: () => {
 			void utils.realEstate.getData.invalidate();
+			void utils.netWorth.getData.invalidate();
 		},
 	});
 	const deleteProperty = api.realEstate.delete.useMutation({
 		onSuccess: () => {
 			void utils.realEstate.getData.invalidate();
+			void utils.netWorth.getData.invalidate();
 		},
 	});
 

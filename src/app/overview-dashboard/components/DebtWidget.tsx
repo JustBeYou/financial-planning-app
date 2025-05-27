@@ -34,16 +34,19 @@ export function DebtWidget() {
 		onSuccess: () => {
 			// Invalidate the getData query to refetch the data
 			void utils.debt.getData.invalidate();
+			void utils.netWorth.getData.invalidate();
 		},
 	});
 	const updateDebt = api.debt.update.useMutation({
 		onSuccess: () => {
 			void utils.debt.getData.invalidate();
+			void utils.netWorth.getData.invalidate();
 		},
 	});
 	const deleteDebt = api.debt.delete.useMutation({
 		onSuccess: () => {
 			void utils.debt.getData.invalidate();
+			void utils.netWorth.getData.invalidate();
 		},
 	});
 

@@ -33,16 +33,19 @@ export function InvestmentsWidget() {
 	const createInvestment = api.investments.create.useMutation({
 		onSuccess: () => {
 			void utils.investments.getData.invalidate();
+			void utils.netWorth.getData.invalidate();
 		},
 	});
 	const updateInvestment = api.investments.update.useMutation({
 		onSuccess: () => {
 			void utils.investments.getData.invalidate();
+			void utils.netWorth.getData.invalidate();
 		},
 	});
 	const deleteInvestment = api.investments.delete.useMutation({
 		onSuccess: () => {
 			void utils.investments.getData.invalidate();
+			void utils.netWorth.getData.invalidate();
 		},
 	});
 
