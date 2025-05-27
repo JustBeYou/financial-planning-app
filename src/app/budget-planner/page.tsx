@@ -436,65 +436,19 @@ export default function BudgetPlannerPage() {
 	// Render budget planner content
 	const BudgetPlannerContent = (
 		<div className="space-y-6">
-			{/* Income Summary Cards */}
-			<div className="grid grid-cols-1 gap-6 md:grid-cols-2">
-				<Card>
-					<div className="p-6">
-						<StatCard
-							label="Total Monthly Income (After Tax)"
-							value={Math.round(totalMonthlyIncome)}
-							suffix=" RON"
-							className="text-accent-lime"
-						/>
-					</div>
-				</Card>
-				<Card>
-					<div className="p-6">
-						<StatCard
-							label="Total Yearly Income (After Tax)"
-							value={Math.round(totalYearlyIncome)}
-							suffix=" RON"
-							className="text-accent-lime"
-						/>
-					</div>
-				</Card>
-			</div>
-
-			{/* Remaining Income Cards */}
-			<div className="grid grid-cols-1 gap-6 md:grid-cols-2">
-				<Card>
-					<div className="p-6">
-						<StatCard
-							label="Remaining Monthly Income"
-							value={Math.round(remainingMonthlyIncome)}
-							suffix=" RON"
-							className={
-								remainingMonthlyIncome >= 0
-									? "text-accent-lime"
-									: "text-red-500"
-							}
-						/>
-					</div>
-				</Card>
-				<Card>
-					<div className="p-6">
-						<StatCard
-							label="Remaining Yearly Income"
-							value={Math.round(remainingYearlyIncome)}
-							suffix=" RON"
-							className={
-								remainingYearlyIncome >= 0 ? "text-accent-lime" : "text-red-500"
-							}
-						/>
-					</div>
-				</Card>
-			</div>
-
 			{/* Budget Overview Cards */}
 			<div className="grid grid-cols-1 gap-6 md:grid-cols-2">
 				{/* Monthly Budget Overview Card */}
 				<Card className="p-6">
-					<h2 className="mb-4 text-2xl font-bold">Monthly Budget Overview</h2>
+					<div className="mb-6 flex items-center justify-between">
+						<h2 className="text-2xl font-bold">Monthly Budget Overview</h2>
+						<div className="text-right">
+							<div className="text-sm text-muted-foreground">Total Income</div>
+							<div className="text-xl font-bold text-accent-lime">
+								{Math.round(totalMonthlyIncome).toLocaleString()} RON
+							</div>
+						</div>
+					</div>
 
 					{totalMonthlyIncome > 0 ? (
 						<>
@@ -527,6 +481,16 @@ export default function BudgetPlannerPage() {
 									</div>
 								))}
 							</div>
+
+							{/* Remaining income summary */}
+							{remainingMonthlyIncome > 0 && (
+								<div className="mt-4 flex items-center justify-between border-t pt-3">
+									<span className="font-medium">Remaining Income:</span>
+									<span className={`font-bold ${remainingMonthlyIncome >= 0 ? "text-accent-lime" : "text-red-500"}`}>
+										{Math.round(remainingMonthlyIncome).toLocaleString()} RON
+									</span>
+								</div>
+							)}
 						</>
 					) : (
 						<div className="text-center text-muted-foreground">
@@ -537,7 +501,15 @@ export default function BudgetPlannerPage() {
 
 				{/* Yearly Budget Overview Card */}
 				<Card className="p-6">
-					<h2 className="mb-4 text-2xl font-bold">Yearly Budget Overview</h2>
+					<div className="mb-6 flex items-center justify-between">
+						<h2 className="text-2xl font-bold">Yearly Budget Overview</h2>
+						<div className="text-right">
+							<div className="text-sm text-muted-foreground">Total Income</div>
+							<div className="text-xl font-bold text-accent-lime">
+								{Math.round(totalYearlyIncome).toLocaleString()} RON
+							</div>
+						</div>
+					</div>
 
 					{totalYearlyIncome > 0 ? (
 						<>
@@ -570,6 +542,16 @@ export default function BudgetPlannerPage() {
 									</div>
 								))}
 							</div>
+
+							{/* Remaining income summary */}
+							{remainingYearlyIncome > 0 && (
+								<div className="mt-4 flex items-center justify-between border-t pt-3">
+									<span className="font-medium">Remaining Income:</span>
+									<span className={`font-bold ${remainingYearlyIncome >= 0 ? "text-accent-lime" : "text-red-500"}`}>
+										{Math.round(remainingYearlyIncome).toLocaleString()} RON
+									</span>
+								</div>
+							)}
 						</>
 					) : (
 						<div className="text-center text-muted-foreground">

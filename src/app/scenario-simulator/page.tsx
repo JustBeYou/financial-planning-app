@@ -169,10 +169,6 @@ export default function ScenarioSimulator() {
 					closeErrorDialog={closeErrorDialog}
 				/>
 
-				<h1 className="font-bold text-3xl text-primary-teal">
-					Financial Scenario Simulator
-				</h1>
-
 				{/* Simulation Settings */}
 				<SimulationSettings
 					monthlyDisposableIncome={monthlyDisposableIncome}
