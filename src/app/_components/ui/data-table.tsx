@@ -61,7 +61,7 @@ export function DataTable<T>({
 						{column.header}
 					</span>
 				))}
-				{showActions && <span>Actions</span>}
+				{showActions && <span className="text-right">Actions</span>}
 			</div>
 
 			{/* Entries */}
@@ -83,7 +83,7 @@ export function DataTable<T>({
 						))}
 
 						{showActions && (
-							<span className="flex gap-2">
+							<span className="flex justify-end gap-2">
 								{onEdit && (
 									<Button
 										variant="ghost"
