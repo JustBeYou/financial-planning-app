@@ -1,4 +1,5 @@
 import { EntryForm, type FormField } from "~/components/ui/entry-form";
+import { Select } from "~/components/ui/select";
 import type { IncomeSource, IncomeType } from "./types";
 
 interface IncomeSourceFormProps {
@@ -36,6 +37,11 @@ export function IncomeSourceForm({
 		{ id: "tax-field", name: "taxPercentage", label: "Tax %", type: "number" },
 	];
 
+	const typeOptions = [
+		{ value: "monthly", label: "Monthly" },
+		{ value: "yearly", label: "Yearly" },
+	];
+
 	return (
 		<EntryForm
 			title={isEditing ? "Edit Income Source" : "Add Income Source"}
@@ -56,16 +62,14 @@ export function IncomeSourceForm({
 				<label htmlFor="type-field" className="text-right">
 					Type
 				</label>
-				<select
+				<Select
 					id="type-field"
 					name="type"
 					value={currentSource.type}
 					onChange={onTypeChange}
-					className="col-span-3 flex h-9 w-full rounded-md border border-input bg-transparent px-3 py-1 text-sm shadow-sm"
-				>
-					<option value="monthly">Monthly</option>
-					<option value="yearly">Yearly</option>
-				</select>
+					className="col-span-3"
+					options={typeOptions}
+				/>
 			</div>
 		</EntryForm>
 	);

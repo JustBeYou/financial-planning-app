@@ -4,7 +4,9 @@ import * as React from "react";
 
 import { cn } from "~/lib/utils";
 
-const Dialog = DialogPrimitive.Root;
+const Dialog = ({ ...props }: DialogPrimitive.DialogProps) => (
+	<DialogPrimitive.Root modal={true} {...props} />
+);
 
 const DialogTrigger = DialogPrimitive.Trigger;
 

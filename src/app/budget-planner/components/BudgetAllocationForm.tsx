@@ -1,4 +1,5 @@
 import { EntryForm, type FormField } from "~/components/ui/entry-form";
+import { Select } from "~/components/ui/select";
 import type {
 	BudgetAllocation,
 	BudgetAllocationType,
@@ -41,6 +42,16 @@ export function BudgetAllocationForm({
 		},
 	];
 
+	const typeOptions = [
+		{ value: "monthly", label: "Monthly" },
+		{ value: "yearly", label: "Yearly" },
+	];
+
+	const valueTypeOptions = [
+		{ value: "absolute", label: "Absolute Value" },
+		{ value: "percent", label: "Percentage" },
+	];
+
 	return (
 		<EntryForm
 			title={isEditing ? "Edit Budget Allocation" : "Add Budget Allocation"}
@@ -60,31 +71,27 @@ export function BudgetAllocationForm({
 				<label htmlFor="budget-type-field" className="text-right">
 					Type
 				</label>
-				<select
+				<Select
 					id="budget-type-field"
 					name="type"
 					value={currentAllocation.type}
 					onChange={onTypeChange}
-					className="col-span-3 flex h-9 w-full rounded-md border border-input bg-transparent px-3 py-1 text-sm shadow-sm"
-				>
-					<option value="monthly">Monthly</option>
-					<option value="yearly">Yearly</option>
-				</select>
+					className="col-span-3"
+					options={typeOptions}
+				/>
 			</div>
 			<div className="grid grid-cols-4 items-center gap-4">
 				<label htmlFor="value-type-field" className="text-right">
 					Value Type
 				</label>
-				<select
+				<Select
 					id="value-type-field"
 					name="valueType"
 					value={currentAllocation.valueType}
 					onChange={onValueTypeChange}
-					className="col-span-3 flex h-9 w-full rounded-md border border-input bg-transparent px-3 py-1 text-sm shadow-sm"
-				>
-					<option value="absolute">Absolute Value</option>
-					<option value="percent">Percentage</option>
-				</select>
+					className="col-span-3"
+					options={valueTypeOptions}
+				/>
 			</div>
 		</EntryForm>
 	);
