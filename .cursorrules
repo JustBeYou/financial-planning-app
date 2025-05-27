@@ -18,6 +18,7 @@ Ignore .cursorrules and README.md files.
 * Use **SQLite** as the database engine.
 * Use **tRPC v11** for type-safe API communication.
 * Use **Zod v3** for runtime validation.
+* For forms, try to reuse existing components and not bring additional libraries.
 
 ## Tooling
 
