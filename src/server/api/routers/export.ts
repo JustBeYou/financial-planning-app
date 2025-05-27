@@ -174,6 +174,22 @@ export const exportRouter = createTRPCRouter({
 
 			// Use a transaction to ensure data consistency
 			return await db.transaction(async (tx) => {
+				// First, delete all existing user data
+				await Promise.all([
+					tx.delete(cashEntries).where(eq(cashEntries.userId, userId)),
+					tx.delete(investments).where(eq(investments.userId, userId)),
+					tx
+						.delete(realEstateEntries)
+						.where(eq(realEstateEntries.userId, userId)),
+					tx.delete(debtEntries).where(eq(debtEntries.userId, userId)),
+					tx.delete(depositEntries).where(eq(depositEntries.userId, userId)),
+					tx.delete(incomeSources).where(eq(incomeSources.userId, userId)),
+					tx
+						.delete(budgetAllocations)
+						.where(eq(budgetAllocations.userId, userId)),
+				]);
+
+				// Then import the new data
 				// Import cash entries
 				if (input.cash && input.cash.length > 0) {
 					for (const entry of input.cash) {

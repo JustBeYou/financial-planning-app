@@ -1,6 +1,6 @@
 "use client";
 
-import { AlertCircle, Info, Upload } from "lucide-react";
+import { AlertCircle, AlertTriangle, Info, Upload } from "lucide-react";
 import { useState } from "react";
 import { api } from "~/trpc/react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "./dialog";
@@ -21,6 +21,7 @@ export function ImportDialog({
 	const [isLoading, setIsLoading] = useState(false);
 	const [importedData, setImportedData] = useState<any>(null);
 	const [importStats, setImportStats] = useState<Record<string, number>>({});
+	const [showConfirmation, setShowConfirmation] = useState(false);
 
 	const importMutation = api.export.importUserData.useMutation({
 		onSuccess: () => {
@@ -39,6 +40,7 @@ export function ImportDialog({
 		if (selectedFile) {
 			setFile(selectedFile);
 			setError(null);
+			setShowConfirmation(false);
 
 			// Read file contents
 			const reader = new FileReader();
@@ -62,6 +64,10 @@ export function ImportDialog({
 			};
 			reader.readAsText(selectedFile);
 		}
+	};
+
+	const handleConfirmImport = () => {
+		setShowConfirmation(true);
 	};
 
 	const handleImport = async () => {
@@ -93,74 +99,123 @@ export function ImportDialog({
 		}
 	};
 
+	const handleCloseDialog = () => {
+		setShowConfirmation(false);
+		onClose();
+	};
+
+	// Calculate total entries to import
+	const totalEntries = Object.values(importStats).reduce(
+		(sum, count) => sum + count,
+		0,
+	);
+
 	return (
-		<Dialog open={isOpen} onOpenChange={onClose}>
-			<DialogContent className="sm:max-w-md">
+		<Dialog open={isOpen} onOpenChange={handleCloseDialog}>
+			<DialogContent className="max-h-[90vh] overflow-y-auto sm:max-w-md">
 				<DialogHeader>
-					<DialogTitle>Import Financial Data</DialogTitle>
+					<DialogTitle>
+						{showConfirmation ? "Confirm Import" : "Import Financial Data"}
+					</DialogTitle>
 				</DialogHeader>
 
-				<div className="space-y-4 py-4">
-					{error && (
-						<div className="flex items-center gap-2 rounded-md bg-red-500/20 p-3 text-sm text-white">
-							<AlertCircle className="h-4 w-4" />
-							{error}
+				{showConfirmation ? (
+					<div className="flex flex-col gap-4 py-3">
+						<div className="rounded-md bg-red-500/20 p-3 text-sm text-white">
+							<div className="flex items-center gap-2 font-bold">
+								<AlertTriangle className="h-4 w-4" />
+								Warning: This will replace all your existing data
+							</div>
+							<p className="mt-1">
+								You are about to import {totalEntries} entries across{" "}
+								{Object.keys(importStats).length} categories.
+							</p>
 						</div>
-					)}
 
-					<div className="flex items-center gap-2 rounded-md bg-secondary-slate/50 p-3 text-sm text-white">
-						<Info className="h-4 w-4 text-accent-aqua" />
-						<span>
-							ID fields are handled automatically. Imported data will be
-							associated with your user account.
-						</span>
+						<div className="flex justify-end gap-3">
+							<button
+								onClick={() => setShowConfirmation(false)}
+								className="rounded-md bg-secondary-slate px-4 py-2 font-medium text-sm text-white transition hover:bg-secondary-slate/80"
+							>
+								Cancel
+							</button>
+							<button
+								onClick={handleImport}
+								disabled={isLoading}
+								className="flex items-center gap-2 rounded-md bg-red-500 px-4 py-2 font-medium text-sm text-white transition hover:bg-red-600 disabled:cursor-not-allowed disabled:opacity-50"
+							>
+								{isLoading ? "Importing..." : "Yes, Replace All Data"}
+							</button>
+						</div>
 					</div>
-
-					<div className="flex flex-col gap-4">
-						<label className="flex flex-col gap-2">
-							<span className="font-medium text-sm">
-								Select JSON file to import
-							</span>
-							<input
-								type="file"
-								accept=".json"
-								onChange={handleFileChange}
-								className="rounded-md bg-secondary-slate p-2 text-sm text-white file:mr-4 file:rounded-md file:border-0 file:bg-primary-teal file:px-4 file:py-2 file:font-semibold file:text-sm file:text-white hover:file:bg-accent-aqua hover:file:text-bg-charcoal"
-							/>
-						</label>
-
-						{importStats && Object.keys(importStats).length > 0 && (
-							<div className="rounded-md bg-secondary-slate p-4">
-								<h3 className="mb-2 font-medium">Data to import:</h3>
-								<ul className="space-y-1 text-sm">
-									{Object.entries(importStats).map(([category, count]) => (
-										<li key={category} className="flex justify-between">
-											<span className="capitalize">{category}:</span>
-											<span>{count} entries</span>
-										</li>
-									))}
-								</ul>
+				) : (
+					<div className="space-y-4 py-3">
+						{error && (
+							<div className="flex items-center gap-2 rounded-md bg-red-500/20 p-3 text-sm text-white">
+								<AlertCircle className="h-4 w-4" />
+								{error}
 							</div>
 						)}
-					</div>
-				</div>
 
-				<div className="flex justify-end gap-3">
-					<button
-						onClick={onClose}
-						className="rounded-md bg-secondary-slate px-4 py-2 font-medium text-sm text-white transition hover:bg-secondary-slate/80"
-					>
-						Cancel
-					</button>
-					<button
-						onClick={handleImport}
-						disabled={!file || isLoading}
-						className="flex items-center gap-2 rounded-md bg-primary-teal px-4 py-2 font-medium text-sm text-white transition hover:bg-accent-aqua hover:text-bg-charcoal disabled:cursor-not-allowed disabled:opacity-50"
-					>
-						<Upload className="h-4 w-4" />
-						{isLoading ? "Importing..." : "Import Data"}
-					</button>
-				</div>
+						<div className="flex items-center gap-2 rounded-md bg-amber-500/20 p-3 text-sm text-white">
+							<AlertTriangle className="h-4 w-4 text-amber-500" />
+							<span>
+								<strong>Warning:</strong> Importing data will overwrite all your
+								existing data. This action cannot be undone.
+							</span>
+						</div>
+
+						<div className="flex flex-col gap-3">
+							<label className="flex flex-col gap-1">
+								<span className="font-medium text-sm">
+									Select JSON file to import
+								</span>
+								<input
+									type="file"
+									accept=".json"
+									onChange={handleFileChange}
+									className="rounded-md bg-secondary-slate p-2 text-sm text-white file:mr-4 file:rounded-md file:border-0 file:bg-primary-teal file:px-4 file:py-2 file:font-semibold file:text-sm file:text-white hover:file:bg-accent-aqua hover:file:text-bg-charcoal"
+								/>
+							</label>
+
+							{importStats && Object.keys(importStats).length > 0 && (
+								<div className="rounded-md bg-secondary-slate p-3">
+									<div className="flex items-center justify-between">
+										<span className="font-medium text-sm">Data to import:</span>
+										<span className="text-sm">
+											{totalEntries} total entries
+										</span>
+									</div>
+									<div className="mt-1 grid grid-cols-2 gap-x-4 gap-y-1 text-xs">
+										{Object.entries(importStats).map(([category, count]) => (
+											<div key={category} className="flex justify-between">
+												<span className="capitalize">{category}:</span>
+												<span>{count}</span>
+											</div>
+										))}
+									</div>
+								</div>
+							)}
+						</div>
+
+						<div className="flex justify-end gap-3">
+							<button
+								onClick={handleCloseDialog}
+								className="rounded-md bg-secondary-slate px-4 py-2 font-medium text-sm text-white transition hover:bg-secondary-slate/80"
+							>
+								Cancel
+							</button>
+							<button
+								onClick={handleConfirmImport}
+								disabled={!file || isLoading}
+								className="flex items-center gap-2 rounded-md bg-primary-teal px-4 py-2 font-medium text-sm text-white transition hover:bg-accent-aqua hover:text-bg-charcoal disabled:cursor-not-allowed disabled:opacity-50"
+							>
+								<Upload className="h-4 w-4" />
+								Continue to Import
+							</button>
+						</div>
+					</div>
+				)}
 			</DialogContent>
 		</Dialog>
 	);
