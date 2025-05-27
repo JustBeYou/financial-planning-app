@@ -11,6 +11,60 @@ interface ImportDialogProps {
 	onSuccess: () => void;
 }
 
+// Define a type for the imported data
+interface ImportedData {
+	cash?: Array<{
+		accountName: string;
+		amount: number;
+		currency: string;
+		date: string;
+	}>;
+	investments?: Array<{
+		name: string;
+		value: number;
+		currency: string;
+		date: string;
+		estimatedYearlyInterest: number;
+	}>;
+	realEstate?: Array<{
+		name: string;
+		value: number;
+		currency: string;
+		date: string;
+	}>;
+	debt?: Array<{
+		name: string;
+		amount: number;
+		currency: string;
+		interestRate: number;
+		lengthMonths: number;
+	}>;
+	deposits?: Array<{
+		bankName: string;
+		amount: number;
+		currency: string;
+		startDate: string;
+		interest: number;
+		lengthMonths: number;
+		maturityDate: string;
+	}>;
+	income?: Array<{
+		name: string;
+		amount: number;
+		currency: string;
+		type: string;
+		taxPercentage: number;
+	}>;
+	budget?: Array<{
+		name: string;
+		value: number;
+		currency: string;
+		type: string;
+		valueType: string;
+	}>;
+	exportDate?: string;
+}
+
 export function ImportDialog({
 	isOpen,
 	onClose,
@@ -19,7 +73,7 @@ export function ImportDialog({
 	const [file, setFile] = useState<File | null>(null);
 	const [error, setError] = useState<string | null>(null);
 	const [isLoading, setIsLoading] = useState(false);
-	const [importedData, setImportedData] = useState<any>(null);
+	const [importedData, setImportedData] = useState<ImportedData | null>(null);
 	const [importStats, setImportStats] = useState<Record<string, number>>({});
 	const [showConfirmation, setShowConfirmation] = useState(false);
 
@@ -64,14 +118,18 @@ export function ImportDialog({
 			const reader = new FileReader();
 			reader.onload = (event) => {
 				try {
-					const data = JSON.parse(event.target?.result as string);
+					const data = JSON.parse(
+						event.target?.result as string,
+					) as ImportedData;
 					setImportedData(data);
 
 					// Calculate stats for preview
 					const stats: Record<string, number> = {};
 					for (const key in data) {
-						if (Array.isArray(data[key])) {
-							stats[key] = data[key].length;
+						if (Array.isArray(data[key as keyof ImportedData])) {
+							stats[key] = (
+								data[key as keyof ImportedData] as unknown[]
+							).length;
 						}
 					}
 					setImportStats(stats);
@@ -152,12 +210,14 @@ export function ImportDialog({
 
 						<div className="flex justify-end gap-3">
 							<button
+								type="button"
 								onClick={() => setShowConfirmation(false)}
 								className="rounded-md bg-secondary-slate px-4 py-2 font-medium text-sm text-white transition hover:bg-secondary-slate/80"
 							>
 								Cancel
 							</button>
 							<button
+								type="button"
 								onClick={handleImport}
 								disabled={isLoading}
 								className="flex items-center gap-2 rounded-md bg-red-500 px-4 py-2 font-medium text-sm text-white transition hover:bg-red-600 disabled:cursor-not-allowed disabled:opacity-50"
@@ -218,12 +278,14 @@ export function ImportDialog({
 
 						<div className="flex justify-end gap-3">
 							<button
+								type="button"
 								onClick={handleCloseDialog}
 								className="rounded-md bg-secondary-slate px-4 py-2 font-medium text-sm text-white transition hover:bg-secondary-slate/80"
 							>
 								Cancel
 							</button>
 							<button
+								type="button"
 								onClick={handleConfirmImport}
 								disabled={!file || isLoading}
 								className="flex items-center gap-2 rounded-md bg-primary-teal px-4 py-2 font-medium text-sm text-white transition hover:bg-accent-aqua hover:text-bg-charcoal disabled:cursor-not-allowed disabled:opacity-50"

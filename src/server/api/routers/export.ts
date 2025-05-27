@@ -93,13 +93,26 @@ const importDataSchema = z.object({
 		.optional(),
 });
 
+// Define a type for database items with ID fields
+interface WithIdFields {
+	id: string | number;
+	userId: string;
+	[key: string]: unknown;
+}
+
 // Helper function to remove id and userId fields
 const removeInternalFields = <T extends Record<string, unknown>>(
 	items: T[],
 ): Partial<T>[] => {
 	return items.map((item) => {
-		const { id, userId, ...rest } = item as any;
-		return rest;
+		// Use type assertion with unknown as intermediate step
+		const itemWithId = item as unknown as {
+			id: unknown;
+			userId: unknown;
+			[key: string]: unknown;
+		};
+		const { id, userId, ...rest } = itemWithId;
+		return rest as Partial<T>;
 	});
 };
 
