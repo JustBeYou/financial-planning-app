@@ -1,7 +1,7 @@
 "use client";
 
 import { AlertCircle, AlertTriangle, Info, Upload } from "lucide-react";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { api } from "~/trpc/react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "./dialog";
 
@@ -22,6 +22,24 @@ export function ImportDialog({
 	const [importedData, setImportedData] = useState<any>(null);
 	const [importStats, setImportStats] = useState<Record<string, number>>({});
 	const [showConfirmation, setShowConfirmation] = useState(false);
+
+	// Reset all state when dialog is opened/closed
+	useEffect(() => {
+		if (!isOpen) {
+			// Reset all state variables when dialog is closed
+			resetState();
+		}
+	}, [isOpen]);
+
+	// Function to reset all state
+	const resetState = () => {
+		setFile(null);
+		setError(null);
+		setIsLoading(false);
+		setImportedData(null);
+		setImportStats({});
+		setShowConfirmation(false);
+	};
 
 	const importMutation = api.export.importUserData.useMutation({
 		onSuccess: () => {
