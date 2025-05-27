@@ -1,6 +1,6 @@
 "use client";
 
-import { PlusCircle, X } from "lucide-react";
+import { PlusCircle, X, AlertCircle } from "lucide-react";
 import { useSession } from "next-auth/react";
 import { useState } from "react";
 import { Button } from "~/components/ui/button";
@@ -8,6 +8,14 @@ import { Card } from "~/components/ui/card";
 import { Input } from "~/components/ui/input";
 import { AppLayout } from "../_components/AppLayout";
 import { LoginForm } from "../_components/login-form";
+import {
+	Dialog,
+	DialogContent,
+	DialogHeader,
+	DialogTitle,
+	DialogDescription,
+	DialogFooter,
+} from "~/components/ui/dialog";
 
 // Types for our simulator
 type Investment = {
@@ -36,6 +44,12 @@ type SimulationResult = {
 	loans: Record<string, number>;
 };
 
+type ErrorDialogState = {
+	isOpen: boolean;
+	title: string;
+	description: string;
+};
+
 export default function ScenarioSimulator() {
 	const { data: session, status } = useSession();
 	const [investments, setInvestments] = useState<Investment[]>([]);
@@ -47,6 +61,11 @@ export default function ScenarioSimulator() {
 	const [simulationResults, setSimulationResults] = useState<
 		SimulationResult[]
 	>([]);
+	const [errorDialog, setErrorDialog] = useState<ErrorDialogState>({
+		isOpen: false,
+		title: "",
+		description: "",
+	});
 
 	// Form states
 	const [newInvestment, setNewInvestment] = useState<Omit<Investment, "id">>({
@@ -64,9 +83,108 @@ export default function ScenarioSimulator() {
 		extraMonthlyPayment: 0,
 	});
 
+	// Show error dialog
+	const showErrorDialog = (title: string, description: string) => {
+		setErrorDialog({
+			isOpen: true,
+			title,
+			description,
+		});
+	};
+
+	// Close error dialog
+	const closeErrorDialog = () => {
+		setErrorDialog({
+			...errorDialog,
+			isOpen: false,
+		});
+	};
+
+	// Validate investment
+	const validateInvestment = (investment: Omit<Investment, "id">): boolean => {
+		if (!investment.name.trim()) {
+			showErrorDialog(
+				"Invalid Investment Name",
+				"Please provide a name for your investment."
+			);
+			return false;
+		}
+
+		if (investment.initialAmount < 0) {
+			showErrorDialog(
+				"Invalid Initial Amount",
+				"Initial amount cannot be negative."
+			);
+			return false;
+		}
+
+		if (investment.monthlyContribution < 0) {
+			showErrorDialog(
+				"Invalid Monthly Contribution",
+				"Monthly contribution cannot be negative."
+			);
+			return false;
+		}
+
+		if (investment.yearlyInterestRate < 0) {
+			showErrorDialog(
+				"Invalid Interest Rate",
+				"Interest rate cannot be negative."
+			);
+			return false;
+		}
+
+		return true;
+	};
+
+	// Validate loan
+	const validateLoan = (loan: Omit<Loan, "id">): boolean => {
+		if (!loan.name.trim()) {
+			showErrorDialog(
+				"Invalid Loan Name",
+				"Please provide a name for your loan."
+			);
+			return false;
+		}
+
+		if (loan.loanAmount <= 0) {
+			showErrorDialog(
+				"Invalid Loan Amount",
+				"Loan amount must be greater than zero."
+			);
+			return false;
+		}
+
+		if (loan.interestRate < 0) {
+			showErrorDialog(
+				"Invalid Interest Rate",
+				"Interest rate cannot be negative."
+			);
+			return false;
+		}
+
+		if (loan.periodMonths <= 0) {
+			showErrorDialog(
+				"Invalid Loan Period",
+				"Loan period must be greater than zero."
+			);
+			return false;
+		}
+
+		if (loan.extraMonthlyPayment < 0) {
+			showErrorDialog(
+				"Invalid Extra Payment",
+				"Extra payment cannot be negative."
+			);
+			return false;
+		}
+
+		return true;
+	};
+
 	// Handlers for investments
 	const handleAddInvestment = () => {
-		if (!newInvestment.name) return;
+		if (!validateInvestment(newInvestment)) return;
 
 		const investment: Investment = {
 			...newInvestment,
@@ -88,7 +206,7 @@ export default function ScenarioSimulator() {
 
 	// Handlers for loans
 	const handleAddLoan = () => {
-		if (!newLoan.name) return;
+		if (!validateLoan(newLoan)) return;
 
 		const loan: Loan = {
 			...newLoan,
@@ -153,8 +271,8 @@ export default function ScenarioSimulator() {
 	// Calculate expected monthly payment for new loan
 	const newLoanMonthlyPayment =
 		newLoan.loanAmount &&
-		newLoan.periodMonths &&
-		newLoan.interestRate !== undefined
+			newLoan.periodMonths &&
+			newLoan.interestRate !== undefined
 			? calculateMonthlyPayment(newLoan)
 			: 0;
 
@@ -286,6 +404,22 @@ export default function ScenarioSimulator() {
 	return (
 		<AppLayout session={session}>
 			<div className="flex flex-col gap-6">
+				{/* Error Dialog */}
+				<Dialog open={errorDialog.isOpen} onOpenChange={closeErrorDialog}>
+					<DialogContent>
+						<DialogHeader>
+							<DialogTitle className="flex items-center gap-2">
+								<AlertCircle className="h-5 w-5 text-accent-coral" />
+								{errorDialog.title}
+							</DialogTitle>
+							<DialogDescription>{errorDialog.description}</DialogDescription>
+						</DialogHeader>
+						<DialogFooter>
+							<Button onClick={closeErrorDialog}>OK</Button>
+						</DialogFooter>
+					</DialogContent>
+				</Dialog>
+
 				<h1 className="font-bold text-3xl text-primary-teal">
 					Financial Scenario Simulator
 				</h1>
