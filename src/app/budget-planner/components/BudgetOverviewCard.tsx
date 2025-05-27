@@ -64,17 +64,19 @@ export function BudgetOverviewCard({
 						{allocationsWithRemaining.map((item, index) => (
 							<div
 								key={item.id}
-								className={`flex items-center justify-between ${item.id === "remaining"
+								className={`flex items-center justify-between ${
+									item.id === "remaining"
 										? "mt-4 border-t pt-3 font-medium"
 										: ""
-									}`}
+								}`}
 							>
 								<div className="flex items-center gap-2">
 									<div
-										className={`h-4 w-4 rounded-sm ${item.id === "remaining"
+										className={`h-4 w-4 rounded-sm ${
+											item.id === "remaining"
 												? REMAINING_COLOR
 												: ALLOCATION_COLORS[index % ALLOCATION_COLORS.length]
-											}`}
+										}`}
 									/>
 									<span>{item.name}</span>
 								</div>
@@ -82,10 +84,13 @@ export function BudgetOverviewCard({
 									<span className="text-muted-foreground text-sm">
 										{Math.round(item.percentage)}%
 									</span>
-									<span className={`${item.id === "remaining"
-											? `font-bold ${remainingIncome >= 0 ? "text-accent-lime" : "text-red-500"}`
-											: "font-medium"
-										}`}>
+									<span
+										className={`${
+											item.id === "remaining"
+												? `font-bold ${remainingIncome >= 0 ? "text-accent-lime" : "text-red-500"}`
+												: "font-medium"
+										}`}
+									>
 										{Math.round(item.amount).toLocaleString()} {currency}
 									</span>
 								</div>

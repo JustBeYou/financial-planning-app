@@ -43,14 +43,12 @@ export function calculateTotalMonthlyBudget(
 			return total + allocation.value / 12;
 		}
 		// For percentage values
-		else {
-			// For monthly allocations, calculate percentage of monthly income
-			if (allocation.type === "monthly") {
-				return total + (totalMonthlyIncome * allocation.value) / 100;
-			}
-			// For yearly allocations, calculate percentage of yearly income and convert to monthly
-			return total + (totalYearlyIncome * allocation.value) / 100 / 12;
+		// For monthly allocations, calculate percentage of monthly income
+		if (allocation.type === "monthly") {
+			return total + (totalMonthlyIncome * allocation.value) / 100;
 		}
+		// For yearly allocations, calculate percentage of yearly income and convert to monthly
+		return total + (totalYearlyIncome * allocation.value) / 100 / 12;
 	}, 0);
 }
 
@@ -73,14 +71,12 @@ export function calculateTotalYearlyBudget(
 			return total + allocation.value * 12;
 		}
 		// For percentage values
-		else {
-			// For yearly allocations, calculate percentage of yearly income
-			if (allocation.type === "yearly") {
-				return total + (totalYearlyIncome * allocation.value) / 100;
-			}
-			// For monthly allocations, calculate percentage of monthly income and convert to yearly
-			return total + ((totalMonthlyIncome * allocation.value) / 100) * 12;
+		// For yearly allocations, calculate percentage of yearly income
+		if (allocation.type === "yearly") {
+			return total + (totalYearlyIncome * allocation.value) / 100;
 		}
+		// For monthly allocations, calculate percentage of monthly income and convert to yearly
+		return total + ((totalMonthlyIncome * allocation.value) / 100) * 12;
 	}, 0);
 }
 
@@ -94,7 +90,6 @@ export function calculateMonthlyAllocations(
 ): AllocationItem[] {
 	return budgetAllocations.map((allocation) => {
 		let amount: number;
-		let percentage: number;
 
 		// Calculate the effective monthly amount
 		if (allocation.valueType === "absolute") {
@@ -110,7 +105,7 @@ export function calculateMonthlyAllocations(
 		}
 
 		// Calculate percentage of monthly income
-		percentage =
+		const percentage =
 			totalMonthlyIncome > 0 ? (amount / totalMonthlyIncome) * 100 : 0;
 
 		return {
@@ -132,7 +127,6 @@ export function calculateYearlyAllocations(
 ): AllocationItem[] {
 	return budgetAllocations.map((allocation) => {
 		let amount: number;
-		let percentage: number;
 
 		// Calculate the effective yearly amount
 		if (allocation.valueType === "absolute") {
@@ -146,7 +140,8 @@ export function calculateYearlyAllocations(
 		}
 
 		// Calculate percentage of yearly income
-		percentage = totalYearlyIncome > 0 ? (amount / totalYearlyIncome) * 100 : 0;
+		const percentage =
+			totalYearlyIncome > 0 ? (amount / totalYearlyIncome) * 100 : 0;
 
 		return {
 			id: allocation.id.toString(),
