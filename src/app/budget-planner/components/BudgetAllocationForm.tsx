@@ -1,5 +1,5 @@
-import { EntryForm, type FormField } from "~/components/ui/entry-form";
-import { Select } from "~/components/ui/select";
+import { EntryForm, type FormField } from "~/app/_components/ui/entry-form";
+import { Select } from "~/app/_components/ui/select";
 import type {
 	BudgetAllocation,
 	BudgetAllocationType,

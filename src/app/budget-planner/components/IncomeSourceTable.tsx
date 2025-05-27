@@ -1,7 +1,7 @@
 import { PlusCircle } from "lucide-react";
-import { Button } from "~/components/ui/button";
-import { Card } from "~/components/ui/card";
-import { type Column, DataTable } from "~/components/ui/data-table";
+import { Button } from "~/app/_components/ui/button";
+import { Card } from "~/app/_components/ui/card";
+import { type Column, DataTable } from "~/app/_components/ui/data-table";
 import type { IncomeSource } from "./types";
 
 interface IncomeSourceTableProps {

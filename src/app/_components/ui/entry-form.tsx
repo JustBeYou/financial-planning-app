@@ -1,13 +1,13 @@
 import type { ReactNode } from "react";
-import { Button } from "~/components/ui/button";
+import { Button } from "~/app/_components/ui/button";
 import {
 	Dialog,
 	DialogContent,
 	DialogFooter,
 	DialogHeader,
 	DialogTitle,
-} from "~/components/ui/dialog";
-import { Input } from "~/components/ui/input";
+} from "~/app/_components/ui/dialog";
+import { Input } from "~/app/_components/ui/input";
 
 export type FormField = {
 	id: string;

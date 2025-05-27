@@ -1,6 +1,6 @@
 import { Pencil, Trash2 } from "lucide-react";
 import type { ReactNode } from "react";
-import { Button } from "~/components/ui/button";
+import { Button } from "~/app/_components/ui/button";
 
 export interface Column<T> {
 	header: string;

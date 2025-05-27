@@ -2,12 +2,12 @@
 
 import { PlusCircle } from "lucide-react";
 import { useState } from "react";
-import { Button } from "~/components/ui/button";
-import { Card } from "~/components/ui/card";
-import { ConfirmDeleteDialog } from "~/components/ui/confirm-delete-dialog";
-import { type Column, DataTable } from "~/components/ui/data-table";
-import { EntryForm, type FormField } from "~/components/ui/entry-form";
-import { StatCard } from "~/components/ui/stat-card";
+import { Button } from "~/app/_components/ui/button";
+import { Card } from "~/app/_components/ui/card";
+import { ConfirmDeleteDialog } from "~/app/_components/ui/confirm-delete-dialog";
+import { type Column, DataTable } from "~/app/_components/ui/data-table";
+import { EntryForm, type FormField } from "~/app/_components/ui/entry-form";
+import { StatCard } from "~/app/_components/ui/stat-card";
 import {
 	calculateDateFromMonths,
 	formatCurrency,

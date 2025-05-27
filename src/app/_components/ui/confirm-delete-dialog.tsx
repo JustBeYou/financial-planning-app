@@ -1,11 +1,11 @@
-import { Button } from "~/components/ui/button";
+import { Button } from "~/app/_components/ui/button";
 import {
 	Dialog,
 	DialogContent,
 	DialogFooter,
 	DialogHeader,
 	DialogTitle,
-} from "~/components/ui/dialog";
+} from "~/app/_components/ui/dialog";
 
 interface ConfirmDeleteDialogProps {
 	open: boolean;

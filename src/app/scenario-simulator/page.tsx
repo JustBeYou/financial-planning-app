@@ -3,7 +3,7 @@
 import { useSession } from "next-auth/react";
 import { useState } from "react";
 import { AppLayout } from "../_components/AppLayout";
-import { LoginForm } from "../_components/login-form";
+import { LoginForm } from "../_components/ui/login-form";
 import {
 	ErrorDialog,
 	InvestmentsSection,

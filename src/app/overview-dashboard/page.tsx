@@ -2,8 +2,8 @@
 
 import { useSession } from "next-auth/react";
 import { AppLayout } from "../_components/AppLayout";
-import { Dashboard } from "../_components/dashboard";
-import { LoginForm } from "../_components/login-form";
+import { LoginForm } from "../_components/ui/login-form";
+import { Dashboard } from "./components/dashboard";
 
 export default function Home() {
 	const { data: session, status } = useSession();

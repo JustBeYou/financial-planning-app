@@ -1,4 +1,4 @@
-import { Card } from "~/components/ui/card";
+import { Card } from "~/app/_components/ui/card";
 import type { Loan } from "../types";
 import { LoanForm } from "./LoanForm";
 import { LoanList } from "./LoanList";

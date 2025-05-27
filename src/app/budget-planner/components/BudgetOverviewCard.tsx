@@ -1,4 +1,4 @@
-import { Card } from "~/components/ui/card";
+import { Card } from "~/app/_components/ui/card";
 import { ALLOCATION_COLORS, REMAINING_COLOR } from "./types";
 import type { AllocationItem } from "./types";
 

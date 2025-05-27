@@ -1,6 +1,6 @@
-import { Button } from "~/components/ui/button";
-import { Card } from "~/components/ui/card";
-import { Input } from "~/components/ui/input";
+import { Button } from "~/app/_components/ui/button";
+import { Card } from "~/app/_components/ui/card";
+import { Input } from "~/app/_components/ui/input";
 import type { FinancialSummary as FinancialSummaryType } from "../types";
 import { FinancialSummary } from "./FinancialSummary";
 

@@ -1,5 +1,5 @@
 import { X } from "lucide-react";
-import { Button } from "~/components/ui/button";
+import { Button } from "~/app/_components/ui/button";
 import type { Loan } from "../types";
 import { calculateMonthlyPayment } from "../utils/calculations";
 

@@ -1,4 +1,4 @@
-export * from "./ErrorDialog";
+export * from "../../_components/ui/ErrorDialog";
 export * from "./FinancialSummary";
 export * from "./SimulationSettings";
 export * from "./InvestmentForm";

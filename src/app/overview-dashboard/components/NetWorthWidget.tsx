@@ -1,6 +1,6 @@
 "use client";
 
-import { Card } from "~/components/ui/card";
+import { Card } from "~/app/_components/ui/card";
 import { api } from "~/trpc/react";
 
 export function NetWorthWidget() {

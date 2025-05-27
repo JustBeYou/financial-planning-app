@@ -1,6 +1,6 @@
 import { PlusCircle } from "lucide-react";
-import { Button } from "~/components/ui/button";
-import { Input } from "~/components/ui/input";
+import { Button } from "~/app/_components/ui/button";
+import { Input } from "~/app/_components/ui/input";
 import type { Loan } from "../types";
 import { calculateMonthlyPayment } from "../utils/calculations";
 

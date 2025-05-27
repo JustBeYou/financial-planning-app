@@ -1,5 +1,5 @@
 import { AlertCircle } from "lucide-react";
-import { Button } from "~/components/ui/button";
+import { Button } from "~/app/_components/ui/button";
 import {
 	Dialog,
 	DialogContent,
@@ -7,8 +7,8 @@ import {
 	DialogFooter,
 	DialogHeader,
 	DialogTitle,
-} from "~/components/ui/dialog";
-import type { ErrorDialogState } from "../types";
+} from "~/app/_components/ui/dialog";
+import type { ErrorDialogState } from "../../scenario-simulator/types";
 
 interface ErrorDialogProps {
 	errorDialog: ErrorDialogState;

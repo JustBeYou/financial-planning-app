@@ -1,5 +1,5 @@
 import { X } from "lucide-react";
-import { Button } from "~/components/ui/button";
+import { Button } from "~/app/_components/ui/button";
 import type { Investment } from "../types";
 
 interface InvestmentListProps {
