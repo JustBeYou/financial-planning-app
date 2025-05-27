@@ -1,12 +1,11 @@
 "use client";
 
 import { useSession } from "next-auth/react";
+import { redirect } from "next/navigation";
 import { useState } from "react";
 import { ConfirmDeleteDialog } from "~/app/_components/ui/confirm-delete-dialog";
-import { StatCard } from "~/app/_components/ui/stat-card";
 import { api } from "~/trpc/react";
 import { AppLayout } from "../_components/AppLayout";
-import { LoginForm } from "../_components/ui/login-form";
 import { BudgetAllocationForm } from "./components/BudgetAllocationForm";
 import { BudgetAllocationTable } from "./components/BudgetAllocationTable";
 import { BudgetOverviewCard } from "./components/BudgetOverviewCard";
@@ -24,6 +23,20 @@ import type { BudgetAllocation, IncomeSource } from "./components/types";
 
 export default function BudgetPlannerPage() {
 	const { data: session, status } = useSession();
+
+	// Show loading state while checking session
+	if (status === "loading") {
+		return (
+			<div className="flex min-h-screen flex-col items-center justify-center bg-background text-foreground">
+				<div className="text-2xl">Loading...</div>
+			</div>
+		);
+	}
+
+	// Show login form if not authenticated
+	if (!session?.user) {
+		redirect("/overview-dashboard");
+	}
 
 	// tRPC hooks
 	const utils = api.useUtils();
@@ -92,18 +105,12 @@ export default function BudgetPlannerPage() {
 			valueType: "absolute",
 		});
 
-	// Show loading state while checking session
-	if (status === "loading" || isLoadingIncome || isLoadingBudget) {
+	if (isLoadingIncome || isLoadingBudget) {
 		return (
 			<div className="flex min-h-screen flex-col items-center justify-center bg-background text-foreground">
 				<div className="text-2xl">Loading...</div>
 			</div>
 		);
-	}
-
-	// Show login form if not authenticated
-	if (!session?.user) {
-		return <LoginForm />;
 	}
 
 	// Fallback if data is not available

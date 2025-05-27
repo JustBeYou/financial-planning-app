@@ -122,4 +122,6 @@ export const authConfig = {
 			return token;
 		},
 	},
+	// Trust localhost in development
+	trustHost: true,
 } satisfies NextAuthConfig;

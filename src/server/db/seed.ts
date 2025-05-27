@@ -37,9 +37,9 @@ const USERS = [
 ];
 
 // Get user IDs as constants to avoid type issues
-const ADMIN_ID = USERS[0]?.id;
-const TEST_ID = USERS[1]?.id;
-const DEMO_ID = USERS[2]?.id;
+const ADMIN_ID = USERS[0]?.id ?? "1";
+const TEST_ID = USERS[1]?.id ?? "2";
+const DEMO_ID = USERS[2]?.id ?? "3";
 
 /**
  * Seed script for populating the database with initial data

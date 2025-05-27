@@ -24,7 +24,7 @@ export function calculateDateFromMonths(
 ): string {
 	const date = new Date(startDate);
 	date.setMonth(date.getMonth() + lengthMonths);
-	return date.toISOString().split("T")[0];
+	return date.toISOString().split("T")[0] as string;
 }
 
 /**
@@ -49,7 +49,7 @@ export function formatPercentage(value: number, decimalPlaces = 2): string {
  * Get today's date in ISO format (YYYY-MM-DD)
  */
 export function getTodayISODate(): string {
-	return new Date().toISOString().split("T")[0];
+	return new Date().toISOString().split("T")[0] as string;
 }
 
 /**
