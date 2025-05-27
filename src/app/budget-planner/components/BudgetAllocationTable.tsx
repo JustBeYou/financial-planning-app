@@ -40,7 +40,7 @@ export function BudgetAllocationTable({
 			accessorKey: "valueType",
 		},
 		{
-			header: "Effective Amount (Monthly)",
+			header: "Effective Amount Monthly",
 			accessorKey: (budget) => {
 				let effectiveAmount: number;
 				if (budget.valueType === "absolute") {

@@ -34,10 +34,16 @@ export function IncomeSourceTable({
 			accessorKey: (income) => `${income.taxPercentage}%`,
 		},
 		{
-			header: "Net Amount",
+			header: "Net Amount Monthly",
 			accessorKey: (income) => {
+				// Calculate net amount after tax
 				const netAmount = income.amount * (1 - income.taxPercentage / 100);
-				return `${netAmount.toLocaleString()} ${income.currency}`;
+
+				// Convert to monthly value if it's a yearly income
+				const monthlyNetAmount =
+					income.type === "monthly" ? netAmount : netAmount / 12;
+
+				return `${Math.round(monthlyNetAmount).toLocaleString()} ${income.currency}`;
 			},
 		},
 	];
