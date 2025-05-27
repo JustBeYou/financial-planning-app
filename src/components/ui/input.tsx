@@ -2,7 +2,7 @@ import * as React from "react";
 import { cn } from "~/lib/utils";
 
 export interface InputProps
-	extends React.InputHTMLAttributes<HTMLInputElement> { }
+	extends React.InputHTMLAttributes<HTMLInputElement> {}
 
 const Input = React.forwardRef<HTMLInputElement, InputProps>(
 	({ className, type, onChange, value: propValue, ...props }, ref) => {
@@ -28,8 +28,8 @@ const Input = React.forwardRef<HTMLInputElement, InputProps>(
 				}
 
 				// For non-empty values, store without leading zeros
-				const numValue = parseFloat(e.target.value);
-				if (!isNaN(numValue)) {
+				const numValue = Number.parseFloat(e.target.value);
+				if (!Number.isNaN(numValue)) {
 					// Only update if it's a valid number
 					setValue(numValue.toString());
 					if (onChange) {
@@ -88,20 +88,23 @@ Input.displayName = "Input";
 function useCombinedRefs<T>(
 	...refs: Array<React.Ref<T> | React.MutableRefObject<T> | null | undefined>
 ): React.RefCallback<T> {
-	return React.useCallback((element: T) => {
-		refs.forEach((ref) => {
-			if (!ref) return;
+	return React.useCallback(
+		(element: T) => {
+			for (const ref of refs) {
+				if (!ref) continue;
 
-			// Handle callback refs
-			if (typeof ref === "function") {
-				ref(element);
+				// Handle callback refs
+				if (typeof ref === "function") {
+					ref(element);
+				}
+				// Handle mutable refs
+				else if (ref) {
+					(ref as React.MutableRefObject<T | null>).current = element;
+				}
 			}
-			// Handle mutable refs
-			else if (ref) {
-				(ref as React.MutableRefObject<T | null>).current = element;
-			}
-		});
-	}, [refs]);
+		},
+		[refs],
+	);
 }
 
 export { Input };
