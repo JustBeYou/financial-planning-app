@@ -234,13 +234,13 @@ export default function ScenarioSimulator() {
 			const investmentValues: Record<string, number> = {};
 			const loanValues: Record<string, number> = {};
 
-			currentInvestments.forEach((inv) => {
+			for (const inv of currentInvestments) {
 				investmentValues[inv.name] = inv.balance;
-			});
+			}
 
-			currentLoans.forEach((loan) => {
+			for (const loan of currentLoans) {
 				loanValues[loan.name] = loan.balance;
-			});
+			}
 
 			const totalInvestmentValue = currentInvestments.reduce(
 				(sum, inv) => sum + inv.balance,
@@ -296,10 +296,14 @@ export default function ScenarioSimulator() {
 
 					<div className="mb-4 grid grid-cols-1 gap-4 md:grid-cols-2">
 						<div>
-							<label className="mb-1 block text-sm">
+							<label
+								className="mb-1 block text-sm"
+								htmlFor="monthlyDisposableIncome"
+							>
 								Monthly Disposable Income (RON)
 							</label>
 							<Input
+								id="monthlyDisposableIncome"
 								type="number"
 								value={monthlyDisposableIncome}
 								onChange={(e) =>
@@ -309,10 +313,14 @@ export default function ScenarioSimulator() {
 							/>
 						</div>
 						<div>
-							<label className="mb-1 block text-sm">
+							<label
+								className="mb-1 block text-sm"
+								htmlFor="simulationPeriodMonths"
+							>
 								Simulation Period (months)
 							</label>
 							<Input
+								id="simulationPeriodMonths"
 								type="number"
 								value={simulationPeriodMonths}
 								onChange={(e) =>
@@ -423,8 +431,14 @@ export default function ScenarioSimulator() {
 							<div className="space-y-2">
 								<div className="grid grid-cols-2 gap-2">
 									<div>
-										<label className="mb-1 block text-sm">Name</label>
+										<label
+											className="mb-1 block text-sm"
+											htmlFor="investmentName"
+										>
+											Name
+										</label>
 										<Input
+											id="investmentName"
 											value={newInvestment.name}
 											onChange={(e) =>
 												setNewInvestment({
@@ -436,8 +450,14 @@ export default function ScenarioSimulator() {
 										/>
 									</div>
 									<div>
-										<label className="mb-1 block text-sm">Initial Amount</label>
+										<label
+											className="mb-1 block text-sm"
+											htmlFor="initialAmount"
+										>
+											Initial Amount
+										</label>
 										<Input
+											id="initialAmount"
 											type="number"
 											value={newInvestment.initialAmount}
 											onChange={(e) =>
@@ -453,10 +473,14 @@ export default function ScenarioSimulator() {
 
 								<div className="grid grid-cols-2 gap-2">
 									<div>
-										<label className="mb-1 block text-sm">
+										<label
+											className="mb-1 block text-sm"
+											htmlFor="monthlyContribution"
+										>
 											Monthly Contribution
 										</label>
 										<Input
+											id="monthlyContribution"
 											type="number"
 											value={newInvestment.monthlyContribution}
 											onChange={(e) =>
@@ -469,10 +493,14 @@ export default function ScenarioSimulator() {
 										/>
 									</div>
 									<div>
-										<label className="mb-1 block text-sm">
+										<label
+											className="mb-1 block text-sm"
+											htmlFor="yearlyInterestRate"
+										>
 											Yearly Interest (%)
 										</label>
 										<Input
+											id="yearlyInterestRate"
 											type="number"
 											value={newInvestment.yearlyInterestRate}
 											onChange={(e) =>
@@ -543,8 +571,11 @@ export default function ScenarioSimulator() {
 							<div className="space-y-2">
 								<div className="grid grid-cols-2 gap-2">
 									<div>
-										<label className="mb-1 block text-sm">Name</label>
+										<label className="mb-1 block text-sm" htmlFor="loanName">
+											Name
+										</label>
 										<Input
+											id="loanName"
 											value={newLoan.name}
 											onChange={(e) =>
 												setNewLoan({ ...newLoan, name: e.target.value })
@@ -553,8 +584,11 @@ export default function ScenarioSimulator() {
 										/>
 									</div>
 									<div>
-										<label className="mb-1 block text-sm">Loan Amount</label>
+										<label className="mb-1 block text-sm" htmlFor="loanAmount">
+											Loan Amount
+										</label>
 										<Input
+											id="loanAmount"
 											type="number"
 											value={newLoan.loanAmount}
 											onChange={(e) =>
@@ -570,10 +604,14 @@ export default function ScenarioSimulator() {
 
 								<div className="grid grid-cols-3 gap-2">
 									<div>
-										<label className="mb-1 block text-sm">
+										<label
+											className="mb-1 block text-sm"
+											htmlFor="interestRate"
+										>
 											Interest Rate (%)
 										</label>
 										<Input
+											id="interestRate"
 											type="number"
 											value={newLoan.interestRate}
 											onChange={(e) =>
@@ -586,10 +624,14 @@ export default function ScenarioSimulator() {
 										/>
 									</div>
 									<div>
-										<label className="mb-1 block text-sm">
+										<label
+											className="mb-1 block text-sm"
+											htmlFor="periodMonths"
+										>
 											Period (months)
 										</label>
 										<Input
+											id="periodMonths"
 											type="number"
 											value={newLoan.periodMonths}
 											onChange={(e) =>
@@ -602,8 +644,14 @@ export default function ScenarioSimulator() {
 										/>
 									</div>
 									<div>
-										<label className="mb-1 block text-sm">Extra Payment</label>
+										<label
+											className="mb-1 block text-sm"
+											htmlFor="extraMonthlyPayment"
+										>
+											Extra Payment
+										</label>
 										<Input
+											id="extraMonthlyPayment"
 											type="number"
 											value={newLoan.extraMonthlyPayment}
 											onChange={(e) =>
