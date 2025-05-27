@@ -33,6 +33,20 @@ interface BudgetAllocation {
 	currency: string;
 }
 
+// Colors for budget allocation visualization
+const ALLOCATION_COLORS = [
+	"bg-blue-500",
+	"bg-purple-500",
+	"bg-pink-500",
+	"bg-indigo-500",
+	"bg-cyan-500",
+	"bg-teal-500",
+	"bg-orange-500",
+	"bg-amber-500",
+];
+
+const REMAINING_COLOR = "bg-green-500";
+
 export default function BudgetPlannerPage() {
 	const { data: session, status } = useSession();
 	const [incomeSources, setIncomeSources] = useState<IncomeSource[]>([]);
@@ -140,6 +154,81 @@ export default function BudgetPlannerPage() {
 	// Calculate remaining income
 	const remainingMonthlyIncome = totalMonthlyIncome - totalMonthlyBudget;
 	const remainingYearlyIncome = totalYearlyIncome - totalYearlyBudget;
+
+	// Calculate monthly allocations for visualization
+	const monthlyAllocations = budgetAllocations.map((allocation) => {
+		let effectiveAmount;
+		if (allocation.type === "monthly") {
+			if (allocation.valueType === "absolute") {
+				effectiveAmount = allocation.value;
+			} else {
+				effectiveAmount = (totalMonthlyIncome * allocation.value) / 100;
+			}
+		} else {
+			// Yearly to monthly
+			if (allocation.valueType === "absolute") {
+				effectiveAmount = allocation.value / 12;
+			} else {
+				effectiveAmount = (totalYearlyIncome * allocation.value) / 100 / 12;
+			}
+		}
+		return {
+			id: allocation.id,
+			name: allocation.name,
+			amount: effectiveAmount,
+			percentage: totalMonthlyIncome > 0 ? (effectiveAmount / totalMonthlyIncome) * 100 : 0,
+		};
+	});
+
+	// Calculate yearly allocations for visualization
+	const yearlyAllocations = budgetAllocations.map((allocation) => {
+		let effectiveAmount;
+		if (allocation.type === "yearly") {
+			if (allocation.valueType === "absolute") {
+				effectiveAmount = allocation.value;
+			} else {
+				effectiveAmount = (totalYearlyIncome * allocation.value) / 100;
+			}
+		} else {
+			// Monthly to yearly
+			if (allocation.valueType === "absolute") {
+				effectiveAmount = allocation.value * 12;
+			} else {
+				effectiveAmount = (totalMonthlyIncome * allocation.value) / 100 * 12;
+			}
+		}
+		return {
+			id: allocation.id,
+			name: allocation.name,
+			amount: effectiveAmount,
+			percentage: totalYearlyIncome > 0 ? (effectiveAmount / totalYearlyIncome) * 100 : 0,
+		};
+	});
+
+	// Sort allocations from largest to smallest
+	const sortedMonthlyAllocations = [...monthlyAllocations].sort((a, b) => b.amount - a.amount);
+	const sortedYearlyAllocations = [...yearlyAllocations].sort((a, b) => b.amount - a.amount);
+
+	// Add remaining income to visualizations
+	const monthlyWithRemaining = [...sortedMonthlyAllocations];
+	if (remainingMonthlyIncome > 0) {
+		monthlyWithRemaining.push({
+			id: "remaining",
+			name: "Remaining Income",
+			amount: remainingMonthlyIncome,
+			percentage: totalMonthlyIncome > 0 ? (remainingMonthlyIncome / totalMonthlyIncome) * 100 : 0,
+		});
+	}
+
+	const yearlyWithRemaining = [...sortedYearlyAllocations];
+	if (remainingYearlyIncome > 0) {
+		yearlyWithRemaining.push({
+			id: "remaining",
+			name: "Remaining Income",
+			amount: remainingYearlyIncome,
+			percentage: totalYearlyIncome > 0 ? (remainingYearlyIncome / totalYearlyIncome) * 100 : 0,
+		});
+	}
 
 	// Event handlers for income sources
 	const handleAddIncome = () => {
@@ -311,17 +400,19 @@ export default function BudgetPlannerPage() {
 			accessorKey: "valueType",
 		},
 		{
-			header: "Effective Amount",
+			header: "Effective Amount (Monthly)",
 			accessorKey: (budget) => {
 				let effectiveAmount;
 				if (budget.valueType === "absolute") {
-					effectiveAmount = budget.value;
+					// Convert yearly to monthly if needed
+					effectiveAmount = budget.type === "monthly"
+						? budget.value
+						: budget.value / 12;
 				} else {
-					// Percentage
-					effectiveAmount =
-						budget.type === "monthly"
-							? (totalMonthlyIncome * budget.value) / 100
-							: (totalYearlyIncome * budget.value) / 100;
+					// Percentage - always calculate as monthly
+					effectiveAmount = budget.type === "monthly"
+						? (totalMonthlyIncome * budget.value) / 100
+						: (totalYearlyIncome * budget.value) / 100 / 12;
 				}
 				return `${Math.round(effectiveAmount).toLocaleString()} ${budget.currency}`;
 			},
@@ -396,6 +487,95 @@ export default function BudgetPlannerPage() {
 							}
 						/>
 					</div>
+				</Card>
+			</div>
+
+			{/* Budget Overview Cards */}
+			<div className="grid grid-cols-1 gap-6 md:grid-cols-2">
+				{/* Monthly Budget Overview Card */}
+				<Card className="p-6">
+					<h2 className="mb-4 text-2xl font-bold">Monthly Budget Overview</h2>
+
+					{totalMonthlyIncome > 0 ? (
+						<>
+							{/* Visual representation */}
+							<div className="mb-4 flex h-8 w-full overflow-hidden rounded-lg">
+								{monthlyWithRemaining.map((item, index) => (
+									<div
+										key={item.id}
+										className={`${item.id === "remaining" ? REMAINING_COLOR : ALLOCATION_COLORS[index % ALLOCATION_COLORS.length]}`}
+										style={{ width: `${item.percentage}%` }}
+										title={`${item.name}: ${Math.round(item.percentage)}%`}
+									/>
+								))}
+							</div>
+
+							{/* Legend and details */}
+							<div className="space-y-2">
+								{monthlyWithRemaining.map((item, index) => (
+									<div key={item.id} className="flex items-center justify-between">
+										<div className="flex items-center gap-2">
+											<div
+												className={`h-4 w-4 rounded-sm ${item.id === "remaining" ? REMAINING_COLOR : ALLOCATION_COLORS[index % ALLOCATION_COLORS.length]}`}
+											/>
+											<span>{item.name}</span>
+										</div>
+										<div className="flex items-center gap-3">
+											<span className="text-sm text-muted-foreground">{Math.round(item.percentage)}%</span>
+											<span className="font-medium">{Math.round(item.amount).toLocaleString()} RON</span>
+										</div>
+									</div>
+								))}
+							</div>
+						</>
+					) : (
+						<div className="text-center text-muted-foreground">
+							Add income sources to see budget overview
+						</div>
+					)}
+				</Card>
+
+				{/* Yearly Budget Overview Card */}
+				<Card className="p-6">
+					<h2 className="mb-4 text-2xl font-bold">Yearly Budget Overview</h2>
+
+					{totalYearlyIncome > 0 ? (
+						<>
+							{/* Visual representation */}
+							<div className="mb-4 flex h-8 w-full overflow-hidden rounded-lg">
+								{yearlyWithRemaining.map((item, index) => (
+									<div
+										key={item.id}
+										className={`${item.id === "remaining" ? REMAINING_COLOR : ALLOCATION_COLORS[index % ALLOCATION_COLORS.length]}`}
+										style={{ width: `${item.percentage}%` }}
+										title={`${item.name}: ${Math.round(item.percentage)}%`}
+									/>
+								))}
+							</div>
+
+							{/* Legend and details */}
+							<div className="space-y-2">
+								{yearlyWithRemaining.map((item, index) => (
+									<div key={item.id} className="flex items-center justify-between">
+										<div className="flex items-center gap-2">
+											<div
+												className={`h-4 w-4 rounded-sm ${item.id === "remaining" ? REMAINING_COLOR : ALLOCATION_COLORS[index % ALLOCATION_COLORS.length]}`}
+											/>
+											<span>{item.name}</span>
+										</div>
+										<div className="flex items-center gap-3">
+											<span className="text-sm text-muted-foreground">{Math.round(item.percentage)}%</span>
+											<span className="font-medium">{Math.round(item.amount).toLocaleString()} RON</span>
+										</div>
+									</div>
+								))}
+							</div>
+						</>
+					) : (
+						<div className="text-center text-muted-foreground">
+							Add income sources to see budget overview
+						</div>
+					)}
 				</Card>
 			</div>
 
