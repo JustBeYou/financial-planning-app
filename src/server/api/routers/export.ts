@@ -12,6 +12,97 @@ import {
 	realEstateEntries,
 } from "~/server/db/schema";
 
+// Define the import data schema
+const importDataSchema = z.object({
+	cash: z
+		.array(
+			z.object({
+				accountName: z.string(),
+				amount: z.number(),
+				currency: z.string(),
+				date: z.string(),
+			}),
+		)
+		.optional(),
+	investments: z
+		.array(
+			z.object({
+				name: z.string(),
+				value: z.number(),
+				currency: z.string(),
+				date: z.string(),
+				estimatedYearlyInterest: z.number(),
+			}),
+		)
+		.optional(),
+	realEstate: z
+		.array(
+			z.object({
+				name: z.string(),
+				value: z.number(),
+				currency: z.string(),
+				date: z.string(),
+			}),
+		)
+		.optional(),
+	debt: z
+		.array(
+			z.object({
+				name: z.string(),
+				amount: z.number(),
+				currency: z.string(),
+				interestRate: z.number(),
+				lengthMonths: z.number(),
+			}),
+		)
+		.optional(),
+	deposits: z
+		.array(
+			z.object({
+				bankName: z.string(),
+				amount: z.number(),
+				currency: z.string(),
+				startDate: z.string(),
+				interest: z.number(),
+				lengthMonths: z.number(),
+				maturityDate: z.string(),
+			}),
+		)
+		.optional(),
+	income: z
+		.array(
+			z.object({
+				name: z.string(),
+				amount: z.number(),
+				currency: z.string(),
+				type: z.string(),
+				taxPercentage: z.number(),
+			}),
+		)
+		.optional(),
+	budget: z
+		.array(
+			z.object({
+				name: z.string(),
+				value: z.number(),
+				currency: z.string(),
+				type: z.string(),
+				valueType: z.string(),
+			}),
+		)
+		.optional(),
+});
+
+// Helper function to remove id and userId fields
+const removeInternalFields = <T extends Record<string, unknown>>(
+	items: T[],
+): Partial<T>[] => {
+	return items.map((item) => {
+		const { id, userId, ...rest } = item as any;
+		return rest;
+	});
+};
+
 export const exportRouter = createTRPCRouter({
 	getUserData: protectedProcedure.query(async ({ ctx }) => {
 		const userId = ctx.session.user.id;
@@ -62,16 +153,130 @@ export const exportRouter = createTRPCRouter({
 			}),
 		]);
 
-		// Return all data in a structured format
+		// Return all data in a structured format with internal fields removed
 		return {
-			cash: cashData,
-			investments: investmentsData,
-			realEstate: realEstateData,
-			debt: debtData,
-			deposits: depositData,
-			income: incomeData,
-			budget: budgetData,
+			cash: removeInternalFields(cashData),
+			investments: removeInternalFields(investmentsData),
+			realEstate: removeInternalFields(realEstateData),
+			debt: removeInternalFields(debtData),
+			deposits: removeInternalFields(depositData),
+			income: removeInternalFields(incomeData),
+			budget: removeInternalFields(budgetData),
 			exportDate: new Date().toISOString(),
 		};
 	}),
+
+	importUserData: protectedProcedure
+		.input(importDataSchema)
+		.mutation(async ({ ctx, input }) => {
+			const userId = ctx.session.user.id;
+			const db = ctx.db;
+
+			// Use a transaction to ensure data consistency
+			return await db.transaction(async (tx) => {
+				// Import cash entries
+				if (input.cash && input.cash.length > 0) {
+					for (const entry of input.cash) {
+						await tx.insert(cashEntries).values({
+							userId,
+							accountName: entry.accountName,
+							amount: entry.amount,
+							currency: entry.currency,
+							date: entry.date,
+						});
+					}
+				}
+
+				// Import investments
+				if (input.investments && input.investments.length > 0) {
+					for (const entry of input.investments) {
+						await tx.insert(investments).values({
+							userId,
+							name: entry.name,
+							value: entry.value,
+							currency: entry.currency,
+							date: entry.date,
+							estimatedYearlyInterest: entry.estimatedYearlyInterest,
+						});
+					}
+				}
+
+				// Import real estate
+				if (input.realEstate && input.realEstate.length > 0) {
+					for (const entry of input.realEstate) {
+						await tx.insert(realEstateEntries).values({
+							userId,
+							name: entry.name,
+							value: entry.value,
+							currency: entry.currency,
+							date: entry.date,
+						});
+					}
+				}
+
+				// Import debt
+				if (input.debt && input.debt.length > 0) {
+					for (const entry of input.debt) {
+						await tx.insert(debtEntries).values({
+							userId,
+							name: entry.name,
+							amount: entry.amount,
+							currency: entry.currency,
+							interestRate: entry.interestRate,
+							lengthMonths: entry.lengthMonths,
+						});
+					}
+				}
+
+				// Import deposits
+				if (input.deposits && input.deposits.length > 0) {
+					for (const entry of input.deposits) {
+						await tx.insert(depositEntries).values({
+							userId,
+							bankName: entry.bankName,
+							amount: entry.amount,
+							currency: entry.currency,
+							startDate: entry.startDate,
+							interest: entry.interest,
+							lengthMonths: entry.lengthMonths,
+							maturityDate: entry.maturityDate,
+						});
+					}
+				}
+
+				// Import income sources
+				if (input.income && input.income.length > 0) {
+					for (const entry of input.income) {
+						await tx.insert(incomeSources).values({
+							userId,
+							name: entry.name,
+							amount: entry.amount,
+							currency: entry.currency,
+							type: entry.type,
+							taxPercentage: entry.taxPercentage,
+						});
+					}
+				}
+
+				// Import budget allocations
+				if (input.budget && input.budget.length > 0) {
+					for (const entry of input.budget) {
+						await tx.insert(budgetAllocations).values({
+							userId,
+							name: entry.name,
+							value: entry.value,
+							currency: entry.currency,
+							type: entry.type,
+							valueType: entry.valueType,
+						});
+					}
+				}
+
+				return {
+					success: true,
+					message: "Data imported successfully",
+					importDate: new Date().toISOString(),
+				};
+			});
+		}),
 });
