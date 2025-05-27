@@ -12,6 +12,8 @@ import { AppLayout } from "../_components/AppLayout";
 import { LoginForm } from "../_components/login-form";
 
 type IncomeType = "monthly" | "yearly";
+type BudgetAllocationType = "monthly" | "yearly";
+type BudgetValueType = "percent" | "absolute";
 
 interface IncomeSource {
 	id: string;
@@ -22,11 +24,25 @@ interface IncomeSource {
 	taxPercentage: number;
 }
 
+interface BudgetAllocation {
+	id: string;
+	name: string;
+	type: BudgetAllocationType;
+	valueType: BudgetValueType;
+	value: number;
+	currency: string;
+}
+
 export default function BudgetPlannerPage() {
 	const { data: session, status } = useSession();
 	const [incomeSources, setIncomeSources] = useState<IncomeSource[]>([]);
+	const [budgetAllocations, setBudgetAllocations] = useState<
+		BudgetAllocation[]
+	>([]);
 	const [isAddingIncome, setIsAddingIncome] = useState(false);
 	const [isEditingIncome, setIsEditingIncome] = useState(false);
+	const [isAddingBudget, setIsAddingBudget] = useState(false);
+	const [isEditingBudget, setIsEditingBudget] = useState(false);
 	const [currentIncomeSource, setCurrentIncomeSource] = useState<IncomeSource>({
 		id: "",
 		name: "",
@@ -35,6 +51,15 @@ export default function BudgetPlannerPage() {
 		type: "monthly",
 		taxPercentage: 0,
 	});
+	const [currentBudgetAllocation, setCurrentBudgetAllocation] =
+		useState<BudgetAllocation>({
+			id: "",
+			name: "",
+			type: "monthly",
+			valueType: "absolute",
+			value: 0,
+			currency: "RON",
+		});
 
 	// Form fields configuration
 	const incomeFormFields: FormField[] = [
@@ -50,6 +75,18 @@ export default function BudgetPlannerPage() {
 		{ id: "tax-field", name: "taxPercentage", label: "Tax %", type: "number" },
 	];
 
+	const budgetFormFields: FormField[] = [
+		{ id: "name-field", name: "name", label: "Name", type: "text" },
+		{ id: "value-field", name: "value", label: "Value", type: "number" },
+		{
+			id: "currency-field",
+			name: "currency",
+			label: "Currency",
+			type: "text",
+			disabled: true,
+		},
+	];
+
 	// Calculate totals
 	const totalMonthlyIncome = incomeSources.reduce((total, source) => {
 		const amount = source.amount * (1 - source.taxPercentage / 100);
@@ -61,7 +98,50 @@ export default function BudgetPlannerPage() {
 		return total + (source.type === "yearly" ? amount : amount * 12);
 	}, 0);
 
-	// Event handlers
+	// Calculate total budget allocations
+	const totalMonthlyBudget = budgetAllocations.reduce((total, allocation) => {
+		if (allocation.type === "monthly") {
+			if (allocation.valueType === "absolute") {
+				return total + allocation.value;
+			} else {
+				// Percentage of monthly income
+				return total + (totalMonthlyIncome * allocation.value) / 100;
+			}
+		} else {
+			// Yearly allocation converted to monthly
+			if (allocation.valueType === "absolute") {
+				return total + allocation.value / 12;
+			} else {
+				// Percentage of yearly income converted to monthly
+				return total + (totalYearlyIncome * allocation.value) / 100 / 12;
+			}
+		}
+	}, 0);
+
+	const totalYearlyBudget = budgetAllocations.reduce((total, allocation) => {
+		if (allocation.type === "yearly") {
+			if (allocation.valueType === "absolute") {
+				return total + allocation.value;
+			} else {
+				// Percentage of yearly income
+				return total + (totalYearlyIncome * allocation.value) / 100;
+			}
+		} else {
+			// Monthly allocation converted to yearly
+			if (allocation.valueType === "absolute") {
+				return total + allocation.value * 12;
+			} else {
+				// Percentage of monthly income converted to yearly
+				return total + ((totalMonthlyIncome * allocation.value) / 100) * 12;
+			}
+		}
+	}, 0);
+
+	// Calculate remaining income
+	const remainingMonthlyIncome = totalMonthlyIncome - totalMonthlyBudget;
+	const remainingYearlyIncome = totalYearlyIncome - totalYearlyBudget;
+
+	// Event handlers for income sources
 	const handleAddIncome = () => {
 		setCurrentIncomeSource({
 			id: "",
@@ -119,7 +199,75 @@ export default function BudgetPlannerPage() {
 		}
 	};
 
-	// Table columns configuration
+	// Event handlers for budget allocations
+	const handleAddBudget = () => {
+		setCurrentBudgetAllocation({
+			id: "",
+			name: "",
+			type: "monthly",
+			valueType: "absolute",
+			value: 0,
+			currency: "RON",
+		});
+		setIsAddingBudget(true);
+	};
+
+	const handleEditBudget = (budget: BudgetAllocation) => {
+		setCurrentBudgetAllocation(budget);
+		setIsEditingBudget(true);
+	};
+
+	const handleDeleteBudget = (budget: BudgetAllocation) => {
+		setBudgetAllocations(
+			budgetAllocations.filter((allocation) => allocation.id !== budget.id),
+		);
+	};
+
+	const handleBudgetInputChange = (
+		e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>,
+	) => {
+		const { name, value } = e.target;
+		setCurrentBudgetAllocation({
+			...currentBudgetAllocation,
+			[name]: name === "value" ? Number(value) : value,
+		});
+	};
+
+	const handleBudgetTypeChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
+		setCurrentBudgetAllocation({
+			...currentBudgetAllocation,
+			type: e.target.value as BudgetAllocationType,
+		});
+	};
+
+	const handleValueTypeChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
+		setCurrentBudgetAllocation({
+			...currentBudgetAllocation,
+			valueType: e.target.value as BudgetValueType,
+		});
+	};
+
+	const handleSaveBudget = () => {
+		if (isEditingBudget) {
+			setBudgetAllocations(
+				budgetAllocations.map((allocation) =>
+					allocation.id === currentBudgetAllocation.id
+						? currentBudgetAllocation
+						: allocation,
+				),
+			);
+			setIsEditingBudget(false);
+		} else {
+			const newBudgetAllocation = {
+				...currentBudgetAllocation,
+				id: crypto.randomUUID(),
+			};
+			setBudgetAllocations([...budgetAllocations, newBudgetAllocation]);
+			setIsAddingBudget(false);
+		}
+	};
+
+	// Table columns configuration for income sources
 	const columns: Column<IncomeSource>[] = [
 		{ header: "Name", accessorKey: "name" },
 		{
@@ -140,6 +288,42 @@ export default function BudgetPlannerPage() {
 			accessorKey: (income) => {
 				const netAmount = income.amount * (1 - income.taxPercentage / 100);
 				return `${netAmount.toLocaleString()} ${income.currency}`;
+			},
+		},
+	];
+
+	// Table columns configuration for budget allocations
+	const budgetColumns: Column<BudgetAllocation>[] = [
+		{ header: "Name", accessorKey: "name" },
+		{
+			header: "Value",
+			accessorKey: (budget) => (
+				<span className="font-medium">
+					{budget.valueType === "percent"
+						? `${budget.value}%`
+						: `${budget.value.toLocaleString()} ${budget.currency}`}
+				</span>
+			),
+		},
+		{ header: "Type", accessorKey: "type" },
+		{
+			header: "Value Type",
+			accessorKey: "valueType",
+		},
+		{
+			header: "Effective Amount",
+			accessorKey: (budget) => {
+				let effectiveAmount;
+				if (budget.valueType === "absolute") {
+					effectiveAmount = budget.value;
+				} else {
+					// Percentage
+					effectiveAmount =
+						budget.type === "monthly"
+							? (totalMonthlyIncome * budget.value) / 100
+							: (totalYearlyIncome * budget.value) / 100;
+				}
+				return `${Math.round(effectiveAmount).toLocaleString()} ${budget.currency}`;
 			},
 		},
 	];
@@ -185,6 +369,36 @@ export default function BudgetPlannerPage() {
 				</Card>
 			</div>
 
+			{/* Remaining Income Cards */}
+			<div className="grid grid-cols-1 gap-6 md:grid-cols-2">
+				<Card>
+					<div className="p-6">
+						<StatCard
+							label="Remaining Monthly Income"
+							value={Math.round(remainingMonthlyIncome)}
+							suffix=" RON"
+							className={
+								remainingMonthlyIncome >= 0
+									? "text-accent-lime"
+									: "text-red-500"
+							}
+						/>
+					</div>
+				</Card>
+				<Card>
+					<div className="p-6">
+						<StatCard
+							label="Remaining Yearly Income"
+							value={Math.round(remainingYearlyIncome)}
+							suffix=" RON"
+							className={
+								remainingYearlyIncome >= 0 ? "text-accent-lime" : "text-red-500"
+							}
+						/>
+					</div>
+				</Card>
+			</div>
+
 			{/* Income Sources Card */}
 			<Card className="p-6">
 				<div className="mb-4 flex items-center justify-between">
@@ -206,6 +420,30 @@ export default function BudgetPlannerPage() {
 					onEdit={handleEditIncome}
 					onDelete={handleDeleteIncome}
 					emptyMessage="No income sources. Click 'Add' to create one."
+				/>
+			</Card>
+
+			{/* Budget Allocations Card */}
+			<Card className="p-6">
+				<div className="mb-4 flex items-center justify-between">
+					<h2 className="font-bold text-2xl">Budget Allocations</h2>
+					<Button
+						onClick={handleAddBudget}
+						size="sm"
+						className="flex items-center gap-1"
+					>
+						<PlusCircle className="h-4 w-4" />
+						<span>Add</span>
+					</Button>
+				</div>
+
+				<DataTable
+					columns={budgetColumns}
+					data={budgetAllocations}
+					keyField="id"
+					onEdit={handleEditBudget}
+					onDelete={handleDeleteBudget}
+					emptyMessage="No budget allocations. Click 'Add' to create one."
 				/>
 			</Card>
 
@@ -243,6 +481,60 @@ export default function BudgetPlannerPage() {
 					>
 						<option value="monthly">Monthly</option>
 						<option value="yearly">Yearly</option>
+					</select>
+				</div>
+			</EntryForm>
+
+			{/* Add/Edit Budget Allocation Form */}
+			<EntryForm
+				title={
+					isEditingBudget ? "Edit Budget Allocation" : "Add Budget Allocation"
+				}
+				open={isAddingBudget || isEditingBudget}
+				onOpenChange={(open) => {
+					if (!open) {
+						setIsAddingBudget(false);
+						setIsEditingBudget(false);
+					}
+				}}
+				formFields={budgetFormFields}
+				formData={{
+					name: currentBudgetAllocation.name,
+					value: currentBudgetAllocation.value,
+					currency: currentBudgetAllocation.currency,
+				}}
+				onInputChange={handleBudgetInputChange}
+				onSubmit={handleSaveBudget}
+				submitLabel={isEditingBudget ? "Update" : "Add"}
+			>
+				<div className="mb-4 grid grid-cols-4 items-center gap-4">
+					<label htmlFor="budget-type-field" className="text-right">
+						Type
+					</label>
+					<select
+						id="budget-type-field"
+						name="type"
+						value={currentBudgetAllocation.type}
+						onChange={handleBudgetTypeChange}
+						className="col-span-3 flex h-9 w-full rounded-md border border-input bg-transparent px-3 py-1 text-sm shadow-sm"
+					>
+						<option value="monthly">Monthly</option>
+						<option value="yearly">Yearly</option>
+					</select>
+				</div>
+				<div className="grid grid-cols-4 items-center gap-4">
+					<label htmlFor="value-type-field" className="text-right">
+						Value Type
+					</label>
+					<select
+						id="value-type-field"
+						name="valueType"
+						value={currentBudgetAllocation.valueType}
+						onChange={handleValueTypeChange}
+						className="col-span-3 flex h-9 w-full rounded-md border border-input bg-transparent px-3 py-1 text-sm shadow-sm"
+					>
+						<option value="absolute">Absolute Value</option>
+						<option value="percent">Percentage</option>
 					</select>
 				</div>
 			</EntryForm>
