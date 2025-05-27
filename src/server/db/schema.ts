@@ -1,5 +1,10 @@
 import { relations, sql } from "drizzle-orm";
-import { integer, sqliteTableCreator, text } from "drizzle-orm/sqlite-core";
+import {
+	index,
+	integer,
+	sqliteTableCreator,
+	text,
+} from "drizzle-orm/sqlite-core";
 
 /**
  * This is an example of how to use the multi-project schema feature of Drizzle ORM. Use the same
@@ -166,3 +171,69 @@ export const depositEntries = createTable("deposit_entry", (d) => ({
 export const depositEntriesRelations = relations(depositEntries, ({ one }) => ({
 	user: one(users, { fields: [depositEntries.userId], references: [users.id] }),
 }));
+
+export const incomeSources = createTable(
+	"income_sources",
+	(d) => ({
+		id: d.integer("id").primaryKey({ autoIncrement: true }),
+		userId: d
+			.text("user_id")
+			.notNull()
+			.references(() => users.id, { onDelete: "cascade" }),
+		name: d.text("name").notNull(),
+		amount: d.integer("amount").notNull(),
+		currency: d.text("currency").notNull().default("RON"),
+		type: d.text("type").notNull().default("monthly"),
+		taxPercentage: d.integer("tax_percentage").notNull().default(0),
+		createdAt: d
+			.integer("created_at", { mode: "timestamp" })
+			.default(sql`(unixepoch())`),
+		updatedAt: d
+			.integer("updated_at", { mode: "timestamp" })
+			.default(sql`(unixepoch())`),
+	}),
+	(table) => ({
+		userIdIdx: index("income_source_user_id_idx").on(table.userId),
+	}),
+);
+
+export const budgetAllocations = createTable(
+	"budget_allocations",
+	(d) => ({
+		id: d.integer("id").primaryKey({ autoIncrement: true }),
+		userId: d
+			.text("user_id")
+			.notNull()
+			.references(() => users.id, { onDelete: "cascade" }),
+		name: d.text("name").notNull(),
+		value: d.integer("value").notNull(),
+		currency: d.text("currency").notNull().default("RON"),
+		type: d.text("type").notNull().default("monthly"),
+		valueType: d.text("value_type").notNull().default("absolute"),
+		createdAt: d
+			.integer("created_at", { mode: "timestamp" })
+			.default(sql`(unixepoch())`),
+		updatedAt: d
+			.integer("updated_at", { mode: "timestamp" })
+			.default(sql`(unixepoch())`),
+	}),
+	(table) => ({
+		userIdIdx: index("budget_allocation_user_id_idx").on(table.userId),
+	}),
+);
+
+// Relations for income sources
+export const incomeSourcesRelations = relations(incomeSources, ({ one }) => ({
+	user: one(users, { fields: [incomeSources.userId], references: [users.id] }),
+}));
+
+// Relations for budget allocations
+export const budgetAllocationsRelations = relations(
+	budgetAllocations,
+	({ one }) => ({
+		user: one(users, {
+			fields: [budgetAllocations.userId],
+			references: [users.id],
+		}),
+	}),
+);

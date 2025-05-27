@@ -2,6 +2,9 @@
 
 import { useSession } from "next-auth/react";
 import { useState } from "react";
+import { ConfirmDeleteDialog } from "~/app/_components/ui/confirm-delete-dialog";
+import { StatCard } from "~/app/_components/ui/stat-card";
+import { api } from "~/trpc/react";
 import { AppLayout } from "../_components/AppLayout";
 import { LoginForm } from "../_components/ui/login-form";
 import { BudgetAllocationForm } from "./components/BudgetAllocationForm";
@@ -17,200 +20,80 @@ import {
 	calculateTotalYearlyIncome,
 	calculateYearlyAllocations,
 } from "./components/calculations";
-import type {
-	BudgetAllocation,
-	BudgetAllocationType,
-	BudgetValueType,
-	IncomeSource,
-	IncomeType,
-} from "./components/types";
+import type { BudgetAllocation, IncomeSource } from "./components/types";
 
 export default function BudgetPlannerPage() {
 	const { data: session, status } = useSession();
-	const [incomeSources, setIncomeSources] = useState<IncomeSource[]>([]);
-	const [budgetAllocations, setBudgetAllocations] = useState<
-		BudgetAllocation[]
-	>([]);
-	const [isAddingIncome, setIsAddingIncome] = useState(false);
-	const [isEditingIncome, setIsEditingIncome] = useState(false);
-	const [isAddingBudget, setIsAddingBudget] = useState(false);
-	const [isEditingBudget, setIsEditingBudget] = useState(false);
+
+	// tRPC hooks
+	const utils = api.useUtils();
+
+	// Income sources
+	const { data: incomeSources, isLoading: isLoadingIncome } =
+		api.income.getData.useQuery();
+	const createIncomeSource = api.income.create.useMutation({
+		onSuccess: () => {
+			void utils.income.getData.invalidate();
+		},
+	});
+	const updateIncomeSource = api.income.update.useMutation({
+		onSuccess: () => {
+			void utils.income.getData.invalidate();
+		},
+	});
+	const deleteIncomeSource = api.income.delete.useMutation({
+		onSuccess: () => {
+			void utils.income.getData.invalidate();
+		},
+	});
+
+	// Budget allocations
+	const { data: budgetAllocations, isLoading: isLoadingBudget } =
+		api.budget.getData.useQuery();
+	const createBudgetAllocation = api.budget.create.useMutation({
+		onSuccess: () => {
+			void utils.budget.getData.invalidate();
+		},
+	});
+	const updateBudgetAllocation = api.budget.update.useMutation({
+		onSuccess: () => {
+			void utils.budget.getData.invalidate();
+		},
+	});
+	const deleteBudgetAllocation = api.budget.delete.useMutation({
+		onSuccess: () => {
+			void utils.budget.getData.invalidate();
+		},
+	});
+
+	// UI state
+	const [isAddIncomeOpen, setIsAddIncomeOpen] = useState(false);
+	const [isEditIncomeOpen, setIsEditIncomeOpen] = useState(false);
+	const [isDeleteIncomeOpen, setIsDeleteIncomeOpen] = useState(false);
 	const [currentIncomeSource, setCurrentIncomeSource] = useState<IncomeSource>({
-		id: "",
+		id: 0,
 		name: "",
 		amount: 0,
 		currency: "RON",
 		type: "monthly",
 		taxPercentage: 0,
 	});
+
+	const [isAddBudgetOpen, setIsAddBudgetOpen] = useState(false);
+	const [isEditBudgetOpen, setIsEditBudgetOpen] = useState(false);
+	const [isDeleteBudgetOpen, setIsDeleteBudgetOpen] = useState(false);
 	const [currentBudgetAllocation, setCurrentBudgetAllocation] =
 		useState<BudgetAllocation>({
-			id: "",
+			id: 0,
 			name: "",
-			type: "monthly",
-			valueType: "absolute",
 			value: 0,
 			currency: "RON",
-		});
-
-	// Calculate totals
-	const totalMonthlyIncome = calculateTotalMonthlyIncome(incomeSources);
-	const totalYearlyIncome = calculateTotalYearlyIncome(incomeSources);
-	const totalMonthlyBudget = calculateTotalMonthlyBudget(
-		budgetAllocations,
-		totalMonthlyIncome,
-		totalYearlyIncome,
-	);
-	const totalYearlyBudget = calculateTotalYearlyBudget(
-		budgetAllocations,
-		totalMonthlyIncome,
-		totalYearlyIncome,
-	);
-
-	// Calculate remaining income
-	const remainingMonthlyIncome = totalMonthlyIncome - totalMonthlyBudget;
-	const remainingYearlyIncome = totalYearlyIncome - totalYearlyBudget;
-
-	// Calculate allocations for visualization
-	const monthlyAllocations = calculateMonthlyAllocations(
-		budgetAllocations,
-		totalMonthlyIncome,
-		totalYearlyIncome,
-	);
-	const yearlyAllocations = calculateYearlyAllocations(
-		budgetAllocations,
-		totalMonthlyIncome,
-		totalYearlyIncome,
-	);
-
-	// Event handlers for income sources
-	const handleAddIncome = () => {
-		setCurrentIncomeSource({
-			id: "",
-			name: "",
-			amount: 0,
-			currency: "RON",
-			type: "monthly",
-			taxPercentage: 0,
-		});
-		setIsAddingIncome(true);
-	};
-
-	const handleEditIncome = (income: IncomeSource) => {
-		setCurrentIncomeSource(income);
-		setIsEditingIncome(true);
-	};
-
-	const handleDeleteIncome = (income: IncomeSource) => {
-		setIncomeSources(incomeSources.filter((source) => source.id !== income.id));
-	};
-
-	const handleIncomeInputChange = (
-		e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>,
-	) => {
-		const { name, value } = e.target;
-		setCurrentIncomeSource({
-			...currentIncomeSource,
-			[name]:
-				name === "amount" || name === "taxPercentage" ? Number(value) : value,
-		});
-	};
-
-	const handleIncomeTypeChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
-		setCurrentIncomeSource({
-			...currentIncomeSource,
-			type: e.target.value as IncomeType,
-		});
-	};
-
-	const handleSaveIncome = () => {
-		if (isEditingIncome) {
-			setIncomeSources(
-				incomeSources.map((source) =>
-					source.id === currentIncomeSource.id ? currentIncomeSource : source,
-				),
-			);
-			setIsEditingIncome(false);
-		} else {
-			const newIncomeSource = {
-				...currentIncomeSource,
-				id: crypto.randomUUID(),
-			};
-			setIncomeSources([...incomeSources, newIncomeSource]);
-			setIsAddingIncome(false);
-		}
-	};
-
-	// Event handlers for budget allocations
-	const handleAddBudget = () => {
-		setCurrentBudgetAllocation({
-			id: "",
-			name: "",
 			type: "monthly",
 			valueType: "absolute",
-			value: 0,
-			currency: "RON",
 		});
-		setIsAddingBudget(true);
-	};
-
-	const handleEditBudget = (budget: BudgetAllocation) => {
-		setCurrentBudgetAllocation(budget);
-		setIsEditingBudget(true);
-	};
-
-	const handleDeleteBudget = (budget: BudgetAllocation) => {
-		setBudgetAllocations(
-			budgetAllocations.filter((allocation) => allocation.id !== budget.id),
-		);
-	};
-
-	const handleBudgetInputChange = (
-		e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>,
-	) => {
-		const { name, value } = e.target;
-		setCurrentBudgetAllocation({
-			...currentBudgetAllocation,
-			[name]: name === "value" ? Number(value) : value,
-		});
-	};
-
-	const handleBudgetTypeChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
-		setCurrentBudgetAllocation({
-			...currentBudgetAllocation,
-			type: e.target.value as BudgetAllocationType,
-		});
-	};
-
-	const handleValueTypeChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
-		setCurrentBudgetAllocation({
-			...currentBudgetAllocation,
-			valueType: e.target.value as BudgetValueType,
-		});
-	};
-
-	const handleSaveBudget = () => {
-		if (isEditingBudget) {
-			setBudgetAllocations(
-				budgetAllocations.map((allocation) =>
-					allocation.id === currentBudgetAllocation.id
-						? currentBudgetAllocation
-						: allocation,
-				),
-			);
-			setIsEditingBudget(false);
-		} else {
-			const newBudgetAllocation = {
-				...currentBudgetAllocation,
-				id: crypto.randomUUID(),
-			};
-			setBudgetAllocations([...budgetAllocations, newBudgetAllocation]);
-			setIsAddingBudget(false);
-		}
-	};
 
 	// Show loading state while checking session
-	if (status === "loading") {
+	if (status === "loading" || isLoadingIncome || isLoadingBudget) {
 		return (
 			<div className="flex min-h-screen flex-col items-center justify-center bg-background text-foreground">
 				<div className="text-2xl">Loading...</div>
@@ -222,6 +105,191 @@ export default function BudgetPlannerPage() {
 	if (!session?.user) {
 		return <LoginForm />;
 	}
+
+	// Fallback if data is not available
+	const sources = incomeSources ?? [];
+	const allocations = budgetAllocations ?? [];
+
+	// Calculate income totals
+	const totalMonthlyIncome = calculateTotalMonthlyIncome(sources);
+	const totalYearlyIncome = calculateTotalYearlyIncome(sources);
+	const annualIncome = totalMonthlyIncome * 12 + totalYearlyIncome;
+
+	// Calculate total budgets
+	const totalMonthlyBudget = calculateTotalMonthlyBudget(
+		allocations,
+		totalMonthlyIncome,
+		totalYearlyIncome,
+	);
+
+	const totalYearlyBudget = calculateTotalYearlyBudget(
+		allocations,
+		totalMonthlyIncome,
+		totalYearlyIncome,
+	);
+
+	// Calculate remaining income
+	const remainingMonthlyIncome = totalMonthlyIncome - totalMonthlyBudget;
+	const remainingYearlyIncome = totalYearlyIncome - totalYearlyBudget;
+
+	// Calculate allocations for visualization
+	const monthlyAllocations = calculateMonthlyAllocations(
+		allocations,
+		totalMonthlyIncome,
+		totalYearlyIncome,
+	);
+
+	const yearlyAllocations = calculateYearlyAllocations(
+		allocations,
+		totalMonthlyIncome,
+		totalYearlyIncome,
+	);
+
+	// Income source handlers
+	const handleAddIncome = () => {
+		setCurrentIncomeSource({
+			id: 0,
+			name: "",
+			amount: 0,
+			currency: "RON",
+			type: "monthly",
+			taxPercentage: 0,
+		});
+		setIsAddIncomeOpen(true);
+	};
+
+	const handleEditIncome = (source: IncomeSource) => {
+		setCurrentIncomeSource(source);
+		setIsEditIncomeOpen(true);
+	};
+
+	const handleDeleteIncome = (source: IncomeSource) => {
+		setCurrentIncomeSource(source);
+		setIsDeleteIncomeOpen(true);
+	};
+
+	const handleIncomeInputChange = (
+		e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>,
+	) => {
+		const { name, value } = e.target;
+		setCurrentIncomeSource((prev) => ({
+			...prev,
+			[name]:
+				name === "amount" || name === "taxPercentage" ? Number(value) : value,
+		}));
+	};
+
+	const handleIncomeTypeChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
+		setCurrentIncomeSource((prev) => ({
+			...prev,
+			type: e.target.value as "monthly" | "yearly",
+		}));
+	};
+
+	const handleAddIncomeSubmit = () => {
+		createIncomeSource.mutate({
+			name: currentIncomeSource.name,
+			amount: currentIncomeSource.amount,
+			currency: currentIncomeSource.currency,
+			type: currentIncomeSource.type,
+			taxPercentage: currentIncomeSource.taxPercentage,
+		});
+		setIsAddIncomeOpen(false);
+	};
+
+	const handleEditIncomeSubmit = () => {
+		updateIncomeSource.mutate({
+			id: currentIncomeSource.id,
+			name: currentIncomeSource.name,
+			amount: currentIncomeSource.amount,
+			currency: currentIncomeSource.currency,
+			type: currentIncomeSource.type,
+			taxPercentage: currentIncomeSource.taxPercentage,
+		});
+		setIsEditIncomeOpen(false);
+	};
+
+	const handleDeleteIncomeConfirm = () => {
+		deleteIncomeSource.mutate({ id: currentIncomeSource.id });
+		setIsDeleteIncomeOpen(false);
+	};
+
+	// Budget allocation handlers
+	const handleAddBudget = () => {
+		setCurrentBudgetAllocation({
+			id: 0,
+			name: "",
+			value: 0,
+			currency: "RON",
+			type: "monthly",
+			valueType: "absolute",
+		});
+		setIsAddBudgetOpen(true);
+	};
+
+	const handleEditBudget = (allocation: BudgetAllocation) => {
+		setCurrentBudgetAllocation(allocation);
+		setIsEditBudgetOpen(true);
+	};
+
+	const handleDeleteBudget = (allocation: BudgetAllocation) => {
+		setCurrentBudgetAllocation(allocation);
+		setIsDeleteBudgetOpen(true);
+	};
+
+	const handleBudgetInputChange = (
+		e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>,
+	) => {
+		const { name, value } = e.target;
+		setCurrentBudgetAllocation((prev) => ({
+			...prev,
+			[name]: name === "value" ? Number(value) : value,
+		}));
+	};
+
+	const handleBudgetTypeChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
+		setCurrentBudgetAllocation((prev) => ({
+			...prev,
+			type: e.target.value as "monthly" | "yearly",
+		}));
+	};
+
+	const handleBudgetValueTypeChange = (
+		e: React.ChangeEvent<HTMLSelectElement>,
+	) => {
+		setCurrentBudgetAllocation((prev) => ({
+			...prev,
+			valueType: e.target.value as "absolute" | "percent",
+		}));
+	};
+
+	const handleAddBudgetSubmit = () => {
+		createBudgetAllocation.mutate({
+			name: currentBudgetAllocation.name,
+			value: currentBudgetAllocation.value,
+			currency: currentBudgetAllocation.currency,
+			type: currentBudgetAllocation.type,
+			valueType: currentBudgetAllocation.valueType,
+		});
+		setIsAddBudgetOpen(false);
+	};
+
+	const handleEditBudgetSubmit = () => {
+		updateBudgetAllocation.mutate({
+			id: currentBudgetAllocation.id,
+			name: currentBudgetAllocation.name,
+			value: currentBudgetAllocation.value,
+			currency: currentBudgetAllocation.currency,
+			type: currentBudgetAllocation.type,
+			valueType: currentBudgetAllocation.valueType,
+		});
+		setIsEditBudgetOpen(false);
+	};
+
+	const handleDeleteBudgetConfirm = () => {
+		deleteBudgetAllocation.mutate({ id: currentBudgetAllocation.id });
+		setIsDeleteBudgetOpen(false);
+	};
 
 	// Render budget planner content
 	const BudgetPlannerContent = (
@@ -247,55 +315,80 @@ export default function BudgetPlannerPage() {
 				/>
 			</div>
 
-			{/* Income Sources Table */}
-			<IncomeSourceTable
-				incomeSources={incomeSources}
-				onAdd={handleAddIncome}
-				onEdit={handleEditIncome}
-				onDelete={handleDeleteIncome}
-			/>
+			{/* Income Sources */}
+			<div className="mb-8">
+				<IncomeSourceTable
+					incomeSources={sources}
+					onAdd={handleAddIncome}
+					onEdit={handleEditIncome}
+					onDelete={handleDeleteIncome}
+				/>
+			</div>
 
-			{/* Budget Allocations Table */}
-			<BudgetAllocationTable
-				budgetAllocations={budgetAllocations}
-				totalMonthlyIncome={totalMonthlyIncome}
-				totalYearlyIncome={totalYearlyIncome}
-				onAdd={handleAddBudget}
-				onEdit={handleEditBudget}
-				onDelete={handleDeleteBudget}
-			/>
+			{/* Budget Allocations */}
+			<div className="mb-8">
+				<BudgetAllocationTable
+					budgetAllocations={allocations}
+					totalMonthlyIncome={totalMonthlyIncome}
+					totalYearlyIncome={totalYearlyIncome}
+					onAdd={handleAddBudget}
+					onEdit={handleEditBudget}
+					onDelete={handleDeleteBudget}
+				/>
+			</div>
 
-			{/* Income Source Form */}
+			{/* Income Forms */}
 			<IncomeSourceForm
-				isEditing={isEditingIncome}
-				isOpen={isAddingIncome || isEditingIncome}
+				isEditing={isEditIncomeOpen}
+				isOpen={isAddIncomeOpen || isEditIncomeOpen}
 				currentSource={currentIncomeSource}
-				onOpenChange={(open) => {
-					if (!open) {
-						setIsAddingIncome(false);
-						setIsEditingIncome(false);
-					}
-				}}
+				onOpenChange={(open) =>
+					isEditIncomeOpen
+						? setIsEditIncomeOpen(open)
+						: setIsAddIncomeOpen(open)
+				}
 				onInputChange={handleIncomeInputChange}
 				onTypeChange={handleIncomeTypeChange}
-				onSubmit={handleSaveIncome}
+				onSubmit={
+					isEditIncomeOpen ? handleEditIncomeSubmit : handleAddIncomeSubmit
+				}
 			/>
 
-			{/* Budget Allocation Form */}
+			{/* Budget Forms */}
 			<BudgetAllocationForm
-				isEditing={isEditingBudget}
-				isOpen={isAddingBudget || isEditingBudget}
+				isEditing={isEditBudgetOpen}
+				isOpen={isAddBudgetOpen || isEditBudgetOpen}
 				currentAllocation={currentBudgetAllocation}
-				onOpenChange={(open) => {
-					if (!open) {
-						setIsAddingBudget(false);
-						setIsEditingBudget(false);
-					}
-				}}
+				onOpenChange={(open) =>
+					isEditBudgetOpen
+						? setIsEditBudgetOpen(open)
+						: setIsAddBudgetOpen(open)
+				}
 				onInputChange={handleBudgetInputChange}
 				onTypeChange={handleBudgetTypeChange}
-				onValueTypeChange={handleValueTypeChange}
-				onSubmit={handleSaveBudget}
+				onValueTypeChange={handleBudgetValueTypeChange}
+				onSubmit={
+					isEditBudgetOpen ? handleEditBudgetSubmit : handleAddBudgetSubmit
+				}
+			/>
+
+			{/* Delete Confirmation Dialogs */}
+			<ConfirmDeleteDialog
+				open={isDeleteIncomeOpen}
+				onOpenChange={setIsDeleteIncomeOpen}
+				onConfirm={handleDeleteIncomeConfirm}
+				title="Delete Income Source"
+				description="Are you sure you want to delete this income source?"
+				itemName={currentIncomeSource.name}
+			/>
+
+			<ConfirmDeleteDialog
+				open={isDeleteBudgetOpen}
+				onOpenChange={setIsDeleteBudgetOpen}
+				onConfirm={handleDeleteBudgetConfirm}
+				title="Delete Budget Allocation"
+				description="Are you sure you want to delete this budget allocation?"
+				itemName={currentBudgetAllocation.name}
 			/>
 		</div>
 	);

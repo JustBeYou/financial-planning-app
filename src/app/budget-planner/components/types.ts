@@ -1,9 +1,9 @@
 export type IncomeType = "monthly" | "yearly";
 export type BudgetAllocationType = "monthly" | "yearly";
-export type BudgetValueType = "percent" | "absolute";
+export type BudgetValueType = "absolute" | "percent";
 
 export interface IncomeSource {
-	id: string;
+	id: number;
 	name: string;
 	amount: number;
 	currency: string;
@@ -12,12 +12,12 @@ export interface IncomeSource {
 }
 
 export interface BudgetAllocation {
-	id: string;
+	id: number;
 	name: string;
-	type: BudgetAllocationType;
-	valueType: BudgetValueType;
 	value: number;
 	currency: string;
+	type: BudgetAllocationType;
+	valueType: BudgetValueType;
 }
 
 export interface AllocationItem {

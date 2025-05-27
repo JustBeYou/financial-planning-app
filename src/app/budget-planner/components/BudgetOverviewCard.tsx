@@ -24,7 +24,7 @@ export function BudgetOverviewCard({
 
 	// Add remaining income to visualizations
 	const allocationsWithRemaining = [...sortedAllocations];
-	if (remainingIncome > 0) {
+	if (remainingIncome !== 0) {
 		allocationsWithRemaining.push({
 			id: "remaining",
 			name: "Remaining Income",
@@ -82,16 +82,14 @@ export function BudgetOverviewCard({
 					</div>
 
 					{/* Remaining income summary */}
-					{remainingIncome > 0 && (
-						<div className="mt-4 flex items-center justify-between border-t pt-3">
-							<span className="font-medium">Remaining Income:</span>
-							<span
-								className={`font-bold ${remainingIncome >= 0 ? "text-accent-lime" : "text-red-500"}`}
-							>
-								{Math.round(remainingIncome).toLocaleString()} {currency}
-							</span>
-						</div>
-					)}
+					<div className="mt-4 flex items-center justify-between border-t pt-3">
+						<span className="font-medium">Remaining Income:</span>
+						<span
+							className={`font-bold ${remainingIncome >= 0 ? "text-accent-lime" : "text-red-500"}`}
+						>
+							{Math.round(remainingIncome).toLocaleString()} {currency}
+						</span>
+					</div>
 				</>
 			) : (
 				<div className="text-center text-muted-foreground">

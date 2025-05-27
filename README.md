@@ -26,3 +26,5 @@ then you instruct it to do it again. You need to be careful providing intial "ar
 * Hard to get tests working.
 * Duplicates a lot of code, we need to add some rule/explicit prompt to avoid this.
 * Sometimes produces code that is not compatible with the linter and not that easy to fix.
+* When there is a lot of code, it tends to delete existing functionality of you are no specific enough,
+or if you do not offer enough examples.

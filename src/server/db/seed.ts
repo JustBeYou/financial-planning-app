@@ -1,8 +1,10 @@
 import { db } from "~/server/db";
 import {
+	budgetAllocations,
 	cashEntries,
 	debtEntries,
 	depositEntries,
+	incomeSources,
 	investments,
 	realEstateEntries,
 	users,
@@ -508,6 +510,234 @@ async function seed() {
 		} else {
 			console.log(
 				`Found ${existingDeposits.length} existing deposit entries, skipping seed.`,
+			);
+		}
+
+		// Check if we already have income sources
+		const existingIncomeSources = await db.select().from(incomeSources);
+
+		if (existingIncomeSources.length === 0) {
+			console.log("Adding initial income sources...");
+
+			// Initial income sources data
+			const initialIncomeSources = [
+				{
+					userId: ADMIN_ID,
+					name: "Salary",
+					amount: 8500,
+					currency: "RON",
+					type: "monthly",
+					taxPercentage: 40,
+				},
+				{
+					userId: ADMIN_ID,
+					name: "Side Project",
+					amount: 2500,
+					currency: "RON",
+					type: "monthly",
+					taxPercentage: 10,
+				},
+				{
+					userId: ADMIN_ID,
+					name: "Yearly Bonus",
+					amount: 15000,
+					currency: "RON",
+					type: "yearly",
+					taxPercentage: 40,
+				},
+				{
+					userId: ADMIN_ID,
+					name: "Dividend Income",
+					amount: 5000,
+					currency: "RON",
+					type: "yearly",
+					taxPercentage: 5,
+				},
+			];
+
+			// Add entries for test user
+			const testUserIncomeSources = [
+				{
+					userId: TEST_ID,
+					name: "Test Salary",
+					amount: 7000,
+					currency: "RON",
+					type: "monthly",
+					taxPercentage: 35,
+				},
+				{
+					userId: TEST_ID,
+					name: "Test Bonus",
+					amount: 10000,
+					currency: "RON",
+					type: "yearly",
+					taxPercentage: 35,
+				},
+			];
+
+			// Add entries for demo user
+			const demoUserIncomeSources = [
+				{
+					userId: DEMO_ID,
+					name: "Demo Salary",
+					amount: 9000,
+					currency: "RON",
+					type: "monthly",
+					taxPercentage: 40,
+				},
+				{
+					userId: DEMO_ID,
+					name: "Demo Freelance",
+					amount: 3000,
+					currency: "RON",
+					type: "monthly",
+					taxPercentage: 10,
+				},
+			];
+
+			// Insert all income source entries
+			const allIncomeSources = [
+				...initialIncomeSources,
+				...testUserIncomeSources,
+				...demoUserIncomeSources,
+			];
+			await db.insert(incomeSources).values(allIncomeSources);
+			console.log(
+				`✅ Added ${allIncomeSources.length} income sources across ${USERS.length} users`,
+			);
+		} else {
+			console.log(
+				`Found ${existingIncomeSources.length} existing income sources, skipping seed.`,
+			);
+		}
+
+		// Check if we already have budget allocations
+		const existingBudgetAllocations = await db.select().from(budgetAllocations);
+
+		if (existingBudgetAllocations.length === 0) {
+			console.log("Adding initial budget allocations...");
+
+			// Initial budget allocations data
+			const initialBudgetAllocations = [
+				{
+					userId: ADMIN_ID,
+					name: "Housing",
+					value: 2500,
+					currency: "RON",
+					type: "monthly",
+					valueType: "absolute",
+				},
+				{
+					userId: ADMIN_ID,
+					name: "Food",
+					value: 1500,
+					currency: "RON",
+					type: "monthly",
+					valueType: "absolute",
+				},
+				{
+					userId: ADMIN_ID,
+					name: "Transportation",
+					value: 800,
+					currency: "RON",
+					type: "monthly",
+					valueType: "absolute",
+				},
+				{
+					userId: ADMIN_ID,
+					name: "Utilities",
+					value: 600,
+					currency: "RON",
+					type: "monthly",
+					valueType: "absolute",
+				},
+				{
+					userId: ADMIN_ID,
+					name: "Savings",
+					value: 20,
+					currency: "RON",
+					type: "monthly",
+					valueType: "percent",
+				},
+				{
+					userId: ADMIN_ID,
+					name: "Investments",
+					value: 15,
+					currency: "RON",
+					type: "monthly",
+					valueType: "percent",
+				},
+				{
+					userId: ADMIN_ID,
+					name: "Vacation Fund",
+					value: 10000,
+					currency: "RON",
+					type: "yearly",
+					valueType: "absolute",
+				},
+			];
+
+			// Add entries for test user
+			const testUserBudgetAllocations = [
+				{
+					userId: TEST_ID,
+					name: "Test Housing",
+					value: 2000,
+					currency: "RON",
+					type: "monthly",
+					valueType: "absolute",
+				},
+				{
+					userId: TEST_ID,
+					name: "Test Savings",
+					value: 25,
+					currency: "RON",
+					type: "monthly",
+					valueType: "percent",
+				},
+			];
+
+			// Add entries for demo user
+			const demoUserBudgetAllocations = [
+				{
+					userId: DEMO_ID,
+					name: "Demo Rent",
+					value: 2200,
+					currency: "RON",
+					type: "monthly",
+					valueType: "absolute",
+				},
+				{
+					userId: DEMO_ID,
+					name: "Demo Food",
+					value: 1200,
+					currency: "RON",
+					type: "monthly",
+					valueType: "absolute",
+				},
+				{
+					userId: DEMO_ID,
+					name: "Demo Investments",
+					value: 30,
+					currency: "RON",
+					type: "monthly",
+					valueType: "percent",
+				},
+			];
+
+			// Insert all budget allocation entries
+			const allBudgetAllocations = [
+				...initialBudgetAllocations,
+				...testUserBudgetAllocations,
+				...demoUserBudgetAllocations,
+			];
+			await db.insert(budgetAllocations).values(allBudgetAllocations);
+			console.log(
+				`✅ Added ${allBudgetAllocations.length} budget allocations across ${USERS.length} users`,
+			);
+		} else {
+			console.log(
+				`Found ${existingBudgetAllocations.length} existing budget allocations, skipping seed.`,
 			);
 		}
 

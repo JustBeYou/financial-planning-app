@@ -25,7 +25,7 @@ export function calculateTotalYearlyIncome(
 }
 
 /**
- * Calculate the total monthly budget
+ * Calculate total monthly budget from all allocations
  */
 export function calculateTotalMonthlyBudget(
 	budgetAllocations: BudgetAllocation[],
@@ -33,25 +33,29 @@ export function calculateTotalMonthlyBudget(
 	totalYearlyIncome: number,
 ): number {
 	return budgetAllocations.reduce((total, allocation) => {
-		if (allocation.type === "monthly") {
-			if (allocation.valueType === "absolute") {
+		// For absolute values
+		if (allocation.valueType === "absolute") {
+			// For monthly allocations, add the full amount
+			if (allocation.type === "monthly") {
 				return total + allocation.value;
 			}
-			// Percentage of monthly income
-			return total + (totalMonthlyIncome * allocation.value) / 100;
-		}
-
-		// Yearly allocation converted to monthly
-		if (allocation.valueType === "absolute") {
+			// For yearly allocations, convert to monthly (divide by 12)
 			return total + allocation.value / 12;
 		}
-		// Percentage of yearly income converted to monthly
-		return total + (totalYearlyIncome * allocation.value) / 100 / 12;
+		// For percentage values
+		else {
+			// For monthly allocations, calculate percentage of monthly income
+			if (allocation.type === "monthly") {
+				return total + (totalMonthlyIncome * allocation.value) / 100;
+			}
+			// For yearly allocations, calculate percentage of yearly income and convert to monthly
+			return total + (totalYearlyIncome * allocation.value) / 100 / 12;
+		}
 	}, 0);
 }
 
 /**
- * Calculate the total yearly budget
+ * Calculate total yearly budget from all allocations
  */
 export function calculateTotalYearlyBudget(
 	budgetAllocations: BudgetAllocation[],
@@ -59,20 +63,24 @@ export function calculateTotalYearlyBudget(
 	totalYearlyIncome: number,
 ): number {
 	return budgetAllocations.reduce((total, allocation) => {
-		if (allocation.type === "yearly") {
-			if (allocation.valueType === "absolute") {
+		// For absolute values
+		if (allocation.valueType === "absolute") {
+			// For yearly allocations, add the full amount
+			if (allocation.type === "yearly") {
 				return total + allocation.value;
 			}
-			// Percentage of yearly income
-			return total + (totalYearlyIncome * allocation.value) / 100;
-		}
-
-		// Monthly allocation converted to yearly
-		if (allocation.valueType === "absolute") {
+			// For monthly allocations, convert to yearly (multiply by 12)
 			return total + allocation.value * 12;
 		}
-		// Percentage of monthly income converted to yearly
-		return total + ((totalMonthlyIncome * allocation.value) / 100) * 12;
+		// For percentage values
+		else {
+			// For yearly allocations, calculate percentage of yearly income
+			if (allocation.type === "yearly") {
+				return total + (totalYearlyIncome * allocation.value) / 100;
+			}
+			// For monthly allocations, calculate percentage of monthly income and convert to yearly
+			return total + ((totalMonthlyIncome * allocation.value) / 100) * 12;
+		}
 	}, 0);
 }
 
@@ -85,29 +93,31 @@ export function calculateMonthlyAllocations(
 	totalYearlyIncome: number,
 ): AllocationItem[] {
 	return budgetAllocations.map((allocation) => {
-		let effectiveAmount: number;
-		if (allocation.type === "monthly") {
-			if (allocation.valueType === "absolute") {
-				effectiveAmount = allocation.value;
-			} else {
-				effectiveAmount = (totalMonthlyIncome * allocation.value) / 100;
-			}
+		let amount: number;
+		let percentage: number;
+
+		// Calculate the effective monthly amount
+		if (allocation.valueType === "absolute") {
+			amount =
+				allocation.type === "monthly"
+					? allocation.value
+					: allocation.value / 12;
 		} else {
-			// Yearly to monthly
-			if (allocation.valueType === "absolute") {
-				effectiveAmount = allocation.value / 12;
-			} else {
-				effectiveAmount = (totalYearlyIncome * allocation.value) / 100 / 12;
-			}
+			amount =
+				allocation.type === "monthly"
+					? (totalMonthlyIncome * allocation.value) / 100
+					: (totalYearlyIncome * allocation.value) / 100 / 12;
 		}
+
+		// Calculate percentage of monthly income
+		percentage =
+			totalMonthlyIncome > 0 ? (amount / totalMonthlyIncome) * 100 : 0;
+
 		return {
-			id: allocation.id,
+			id: allocation.id.toString(),
 			name: allocation.name,
-			amount: effectiveAmount,
-			percentage:
-				totalMonthlyIncome > 0
-					? (effectiveAmount / totalMonthlyIncome) * 100
-					: 0,
+			amount,
+			percentage,
 		};
 	});
 }
@@ -121,27 +131,28 @@ export function calculateYearlyAllocations(
 	totalYearlyIncome: number,
 ): AllocationItem[] {
 	return budgetAllocations.map((allocation) => {
-		let effectiveAmount: number;
-		if (allocation.type === "yearly") {
-			if (allocation.valueType === "absolute") {
-				effectiveAmount = allocation.value;
-			} else {
-				effectiveAmount = (totalYearlyIncome * allocation.value) / 100;
-			}
+		let amount: number;
+		let percentage: number;
+
+		// Calculate the effective yearly amount
+		if (allocation.valueType === "absolute") {
+			amount =
+				allocation.type === "yearly" ? allocation.value : allocation.value * 12;
 		} else {
-			// Monthly to yearly
-			if (allocation.valueType === "absolute") {
-				effectiveAmount = allocation.value * 12;
-			} else {
-				effectiveAmount = ((totalMonthlyIncome * allocation.value) / 100) * 12;
-			}
+			amount =
+				allocation.type === "yearly"
+					? (totalYearlyIncome * allocation.value) / 100
+					: ((totalMonthlyIncome * allocation.value) / 100) * 12;
 		}
+
+		// Calculate percentage of yearly income
+		percentage = totalYearlyIncome > 0 ? (amount / totalYearlyIncome) * 100 : 0;
+
 		return {
-			id: allocation.id,
+			id: allocation.id.toString(),
 			name: allocation.name,
-			amount: effectiveAmount,
-			percentage:
-				totalYearlyIncome > 0 ? (effectiveAmount / totalYearlyIncome) * 100 : 0,
+			amount,
+			percentage,
 		};
 	});
 }
