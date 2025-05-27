@@ -35,6 +35,11 @@ Ignore .cursorrules and README.md files.
 * Before adding a new feature/component/API routes etc. check if you may need to reuse existing code to avoid duplication.
 * Try to keep UI components split in two categories: smart (with business logic, API fetching etc.) and dumb (only UI, data taken from props).
 * Try to keep files under 500 lines of code. Split code into reasonable modules/components when necessary.
+* `src/app` should be for publicly exposed stuff (frontend).
+* `src/server` should be for the backend
+* `src/components` should be for generic/shared components across the entire UI
+* `src/features` should be for grouping code by functionality, each feature should be ideally independent of each other.
+* `src/lib` should be for generic business logic that may be shared across the entire project (frontend and backend).
 
 ## Testing
 
