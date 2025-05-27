@@ -1,7 +1,9 @@
 "use client";
 
+import { Download } from "lucide-react";
 import type { Session } from "next-auth";
 import { signOut } from "next-auth/react";
+import { api } from "~/trpc/react";
 import { TabMenu } from "./TabMenu";
 
 interface AppLayoutProps {
@@ -10,6 +12,40 @@ interface AppLayoutProps {
 }
 
 export function AppLayout({ session, children }: AppLayoutProps) {
+	const exportUserData = api.export.getUserData.useQuery(undefined, {
+		enabled: false,
+	});
+
+	const handleExportData = async () => {
+		try {
+			// Fetch user data
+			await exportUserData.refetch();
+
+			if (exportUserData.data) {
+				// Convert data to JSON string
+				const jsonData = JSON.stringify(exportUserData.data, null, 2);
+
+				// Create blob and download link
+				const blob = new Blob([jsonData], { type: "application/json" });
+				const url = URL.createObjectURL(blob);
+
+				// Create temporary download link
+				const link = document.createElement("a");
+				link.href = url;
+				link.download = `financial-data-export-${new Date().toISOString().split("T")[0]}.json`;
+				document.body.appendChild(link);
+				link.click();
+
+				// Clean up
+				document.body.removeChild(link);
+				URL.revokeObjectURL(url);
+			}
+		} catch (error) {
+			console.error("Error exporting data:", error);
+			alert("Failed to export data. Please try again.");
+		}
+	};
+
 	return (
 		<div className="min-h-screen bg-gradient-to-b from-primary-navy to-bg-charcoal text-text-white">
 			<div className="container mx-auto px-4 py-8">
@@ -19,13 +55,24 @@ export function AppLayout({ session, children }: AppLayoutProps) {
 						<span className="text-primary-teal">Financial Planning</span>{" "}
 						Dashboard
 					</h1>
-					<button
-						type="button"
-						onClick={() => signOut()}
-						className="rounded-full bg-secondary-slate px-6 py-2 font-semibold transition hover:bg-primary-teal"
-					>
-						Sign Out
-					</button>
+					<div className="flex items-center gap-3">
+						<button
+							type="button"
+							onClick={handleExportData}
+							className="flex items-center gap-2 rounded-full bg-secondary-slate px-6 py-2 font-semibold transition hover:bg-primary-teal"
+							disabled={exportUserData.isFetching}
+						>
+							<Download className="h-4 w-4" />
+							{exportUserData.isFetching ? "Exporting..." : "Export Data"}
+						</button>
+						<button
+							type="button"
+							onClick={() => signOut()}
+							className="rounded-full bg-secondary-slate px-6 py-2 font-semibold transition hover:bg-primary-teal"
+						>
+							Sign Out
+						</button>
+					</div>
 				</div>
 
 				{/* Tab Menu */}
