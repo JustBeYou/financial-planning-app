@@ -7,7 +7,7 @@ export function TabMenu() {
 	const pathname = usePathname();
 
 	const tabs = [
-		{ name: "Overview", path: "/" },
+		{ name: "Overview", path: "/overview-dashboard" },
 		{ name: "Budget Planner", path: "/budget-planner" },
 		{ name: "Scenario simulator", path: "/scenario-simulator" },
 	];
