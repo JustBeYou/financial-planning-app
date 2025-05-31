@@ -24,12 +24,12 @@ export function AppLayout({ session, children }: AppLayoutProps) {
 
 	const handleExportData = async () => {
 		try {
-			// Fetch user data
-			await exportUserData.refetch();
+			// Fetch user data and get the result directly
+			const result = await exportUserData.refetch();
 
-			if (exportUserData.data) {
+			if (result.data) {
 				// Convert data to JSON string
-				const jsonData = JSON.stringify(exportUserData.data, null, 2);
+				const jsonData = JSON.stringify(result.data, null, 2);
 
 				// Create blob and download link
 				const blob = new Blob([jsonData], { type: "application/json" });
