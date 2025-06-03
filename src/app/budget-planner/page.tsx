@@ -309,6 +309,7 @@ export default function BudgetPlannerPage() {
 					totalIncome={totalMonthlyIncome}
 					allocations={monthlyAllocations}
 					remainingIncome={remainingMonthlyIncome}
+					totalSpentIncome={totalMonthlyBudget}
 					currency="RON"
 				/>
 
@@ -318,6 +319,7 @@ export default function BudgetPlannerPage() {
 					totalIncome={totalYearlyIncome}
 					allocations={yearlyAllocations}
 					remainingIncome={remainingYearlyIncome}
+					totalSpentIncome={totalYearlyBudget}
 					currency="RON"
 				/>
 			</div>
