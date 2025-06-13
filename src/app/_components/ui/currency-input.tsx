@@ -2,7 +2,10 @@ import * as React from "react";
 import { cn } from "~/lib/utils";
 
 export interface CurrencyInputProps
-	extends Omit<React.InputHTMLAttributes<HTMLInputElement>, "onChange" | "value"> {
+	extends Omit<
+		React.InputHTMLAttributes<HTMLInputElement>,
+		"onChange" | "value"
+	> {
 	value: number;
 	onChange: (value: number) => void;
 	currency?: string;
@@ -10,15 +13,25 @@ export interface CurrencyInputProps
 }
 
 const CurrencyInput = React.forwardRef<HTMLInputElement, CurrencyInputProps>(
-	({ className, value, onChange, currency = "RON", showCurrency = false, ...props }, ref) => {
+	(
+		{
+			className,
+			value,
+			onChange,
+			currency = "RON",
+			showCurrency = false,
+			...props
+		},
+		ref,
+	) => {
 		const [displayValue, setDisplayValue] = React.useState<string>("");
 		const [isFocused, setIsFocused] = React.useState(false);
 
 		// Format number with separators for display
-		const formatNumber = (num: number): string => {
+		const formatNumber = React.useCallback((num: number): string => {
 			if (num === 0) return "";
 			return num.toLocaleString("ro-RO");
-		};
+		}, []);
 
 		// Parse formatted string back to number
 		const parseNumber = (str: string): number => {
@@ -36,17 +49,17 @@ const CurrencyInput = React.forwardRef<HTMLInputElement, CurrencyInputProps>(
 			if (!isFocused) {
 				setDisplayValue(formatNumber(value));
 			}
-		}, [value, isFocused]);
+		}, [value, isFocused, formatNumber]);
 
 		// Initialize display value
 		React.useEffect(() => {
 			setDisplayValue(formatNumber(value));
-		}, []);
+		}, [value, formatNumber]);
 
 		const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
 			const inputValue = e.target.value;
 			setDisplayValue(inputValue);
-			
+
 			const numericValue = parseNumber(inputValue);
 			onChange(numericValue);
 		};
@@ -86,7 +99,7 @@ const CurrencyInput = React.forwardRef<HTMLInputElement, CurrencyInputProps>(
 					{...props}
 				/>
 				{showCurrency && (
-					<div className="absolute inset-y-0 right-0 flex items-center pr-3 pointer-events-none">
+					<div className="pointer-events-none absolute inset-y-0 right-0 flex items-center pr-3">
 						<span className="text-muted-foreground text-sm">{currency}</span>
 					</div>
 				)}

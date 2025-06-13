@@ -2,6 +2,7 @@ import { PlusCircle } from "lucide-react";
 import { Button } from "~/app/_components/ui/button";
 import { Card } from "~/app/_components/ui/card";
 import { type Column, DataTable } from "~/app/_components/ui/data-table";
+import { ALLOCATION_COLORS } from "./types";
 import type { BudgetAllocation } from "./types";
 
 interface BudgetAllocationTableProps {
@@ -23,7 +24,22 @@ export function BudgetAllocationTable({
 }: BudgetAllocationTableProps) {
 	// Table columns configuration for budget allocations
 	const budgetColumns: Column<BudgetAllocation>[] = [
-		{ header: "Name", accessorKey: "name" },
+		{
+			header: "Name",
+			accessorKey: (row: BudgetAllocation) => {
+				const index = budgetAllocations.findIndex((item) => item.id === row.id);
+				return (
+					<div className="flex items-center gap-2">
+						<div
+							className={`h-4 w-4 rounded-sm ${ALLOCATION_COLORS[index % ALLOCATION_COLORS.length]}`}
+						/>
+						<span>{row.name}</span>
+					</div>
+				);
+			},
+			sortable: true,
+			sortValue: (row) => row.name,
+		},
 		{
 			header: "Value",
 			accessorKey: (budget) => (
@@ -33,11 +49,20 @@ export function BudgetAllocationTable({
 						: `${budget.value.toLocaleString()} ${budget.currency}`}
 				</span>
 			),
+			sortable: true,
+			sortValue: (row) => row.value,
 		},
-		{ header: "Type", accessorKey: "type" },
+		{
+			header: "Type",
+			accessorKey: "type",
+			sortable: true,
+			sortValue: (row) => row.type,
+		},
 		{
 			header: "Value Type",
 			accessorKey: "valueType",
+			sortable: true,
+			sortValue: (row) => row.valueType,
 		},
 		{
 			header: "Effective Amount Monthly",
@@ -55,6 +80,20 @@ export function BudgetAllocationTable({
 							: (totalYearlyIncome * budget.value) / 100 / 12;
 				}
 				return `${Math.round(effectiveAmount).toLocaleString()} ${budget.currency}`;
+			},
+			sortable: true,
+			sortValue: (budget) => {
+				let effectiveAmount: number;
+				if (budget.valueType === "absolute") {
+					effectiveAmount =
+						budget.type === "monthly" ? budget.value : budget.value / 12;
+				} else {
+					effectiveAmount =
+						budget.type === "monthly"
+							? (totalMonthlyIncome * budget.value) / 100
+							: (totalYearlyIncome * budget.value) / 100 / 12;
+				}
+				return effectiveAmount;
 			},
 		},
 	];
@@ -76,6 +115,8 @@ export function BudgetAllocationTable({
 				onEdit={onEdit}
 				onDelete={onDelete}
 				emptyMessage="No budget allocations. Click 'Add' to create one."
+				defaultSortColumn="Effective Amount Monthly"
+				defaultSortDirection="desc"
 			/>
 		</Card>
 	);

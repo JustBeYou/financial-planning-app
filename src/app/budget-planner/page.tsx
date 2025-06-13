@@ -23,22 +23,6 @@ import type { BudgetAllocation, IncomeSource } from "./components/types";
 
 export default function BudgetPlannerPage() {
 	const { data: session, status } = useSession();
-
-	// Show loading state while checking session
-	if (status === "loading") {
-		return (
-			<div className="flex min-h-screen flex-col items-center justify-center bg-background text-foreground">
-				<div className="text-2xl">Loading...</div>
-			</div>
-		);
-	}
-
-	// Show login form if not authenticated
-	if (!session?.user) {
-		redirect("/overview-dashboard");
-	}
-
-	// tRPC hooks
 	const utils = api.useUtils();
 
 	// Income sources
@@ -104,6 +88,20 @@ export default function BudgetPlannerPage() {
 			type: "monthly",
 			valueType: "absolute",
 		});
+
+	// Show loading state while checking session
+	if (status === "loading") {
+		return (
+			<div className="flex min-h-screen flex-col items-center justify-center bg-background text-foreground">
+				<div className="text-2xl">Loading...</div>
+			</div>
+		);
+	}
+
+	// Show login form if not authenticated
+	if (!session?.user) {
+		redirect("/overview-dashboard");
+	}
 
 	if (isLoadingIncome || isLoadingBudget) {
 		return (
@@ -298,87 +296,90 @@ export default function BudgetPlannerPage() {
 		setIsDeleteBudgetOpen(false);
 	};
 
-	// Render budget planner content
-	const BudgetPlannerContent = (
-		<div className="space-y-6">
-			{/* Budget Overview Cards */}
-			<div className="grid grid-cols-1 gap-6 md:grid-cols-2">
-				{/* Monthly Budget Overview Card */}
-				<BudgetOverviewCard
-					title="Monthly Budget Overview"
-					totalIncome={totalMonthlyIncome}
-					allocations={monthlyAllocations}
-					remainingIncome={remainingMonthlyIncome}
-					totalSpentIncome={totalMonthlyBudget}
-					currency="RON"
-				/>
+	return (
+		<AppLayout session={session}>
+			<div className="container mx-auto space-y-6 p-6">
+				<div className="grid gap-6 md:grid-cols-2">
+					<BudgetOverviewCard
+						title="Monthly Budget Overview"
+						totalIncome={totalMonthlyIncome}
+						allocations={monthlyAllocations}
+						remainingIncome={remainingMonthlyIncome}
+						totalSpentIncome={totalMonthlyBudget}
+						currency="RON"
+					/>
 
-				{/* Yearly Budget Overview Card */}
-				<BudgetOverviewCard
-					title="Yearly Budget Overview"
-					totalIncome={totalYearlyIncome}
-					allocations={yearlyAllocations}
-					remainingIncome={remainingYearlyIncome}
-					totalSpentIncome={totalYearlyBudget}
-					currency="RON"
-				/>
+					<BudgetOverviewCard
+						title="Yearly Budget Overview"
+						totalIncome={totalYearlyIncome}
+						allocations={yearlyAllocations}
+						remainingIncome={remainingYearlyIncome}
+						totalSpentIncome={totalYearlyBudget}
+						currency="RON"
+					/>
+				</div>
+
+				<div className="space-y-6">
+					<IncomeSourceTable
+						incomeSources={sources}
+						onAdd={handleAddIncome}
+						onEdit={handleEditIncome}
+						onDelete={handleDeleteIncome}
+					/>
+
+					<BudgetAllocationTable
+						budgetAllocations={allocations}
+						totalMonthlyIncome={totalMonthlyIncome}
+						totalYearlyIncome={totalYearlyIncome}
+						onAdd={handleAddBudget}
+						onEdit={handleEditBudget}
+						onDelete={handleDeleteBudget}
+					/>
+				</div>
 			</div>
 
-			{/* Income Sources */}
-			<div className="mb-8">
-				<IncomeSourceTable
-					incomeSources={sources}
-					onAdd={handleAddIncome}
-					onEdit={handleEditIncome}
-					onDelete={handleDeleteIncome}
-				/>
-			</div>
-
-			{/* Budget Allocations */}
-			<div className="mb-8">
-				<BudgetAllocationTable
-					budgetAllocations={allocations}
-					totalMonthlyIncome={totalMonthlyIncome}
-					totalYearlyIncome={totalYearlyIncome}
-					onAdd={handleAddBudget}
-					onEdit={handleEditBudget}
-					onDelete={handleDeleteBudget}
-				/>
-			</div>
-
-			{/* Income Forms */}
+			{/* Income Source Forms */}
 			<IncomeSourceForm
-				isEditing={isEditIncomeOpen}
-				isOpen={isAddIncomeOpen || isEditIncomeOpen}
+				isEditing={false}
+				isOpen={isAddIncomeOpen}
 				currentSource={currentIncomeSource}
-				onOpenChange={(open) =>
-					isEditIncomeOpen
-						? setIsEditIncomeOpen(open)
-						: setIsAddIncomeOpen(open)
-				}
+				onOpenChange={setIsAddIncomeOpen}
 				onInputChange={handleIncomeInputChange}
 				onTypeChange={handleIncomeTypeChange}
-				onSubmit={
-					isEditIncomeOpen ? handleEditIncomeSubmit : handleAddIncomeSubmit
-				}
+				onSubmit={handleAddIncomeSubmit}
 			/>
 
-			{/* Budget Forms */}
+			<IncomeSourceForm
+				isEditing={true}
+				isOpen={isEditIncomeOpen}
+				currentSource={currentIncomeSource}
+				onOpenChange={setIsEditIncomeOpen}
+				onInputChange={handleIncomeInputChange}
+				onTypeChange={handleIncomeTypeChange}
+				onSubmit={handleEditIncomeSubmit}
+			/>
+
+			{/* Budget Allocation Forms */}
 			<BudgetAllocationForm
-				isEditing={isEditBudgetOpen}
-				isOpen={isAddBudgetOpen || isEditBudgetOpen}
+				isEditing={false}
+				isOpen={isAddBudgetOpen}
 				currentAllocation={currentBudgetAllocation}
-				onOpenChange={(open) =>
-					isEditBudgetOpen
-						? setIsEditBudgetOpen(open)
-						: setIsAddBudgetOpen(open)
-				}
+				onOpenChange={setIsAddBudgetOpen}
 				onInputChange={handleBudgetInputChange}
 				onTypeChange={handleBudgetTypeChange}
 				onValueTypeChange={handleBudgetValueTypeChange}
-				onSubmit={
-					isEditBudgetOpen ? handleEditBudgetSubmit : handleAddBudgetSubmit
-				}
+				onSubmit={handleAddBudgetSubmit}
+			/>
+
+			<BudgetAllocationForm
+				isEditing={true}
+				isOpen={isEditBudgetOpen}
+				currentAllocation={currentBudgetAllocation}
+				onOpenChange={setIsEditBudgetOpen}
+				onInputChange={handleBudgetInputChange}
+				onTypeChange={handleBudgetTypeChange}
+				onValueTypeChange={handleBudgetValueTypeChange}
+				onSubmit={handleEditBudgetSubmit}
 			/>
 
 			{/* Delete Confirmation Dialogs */}
@@ -387,7 +388,7 @@ export default function BudgetPlannerPage() {
 				onOpenChange={setIsDeleteIncomeOpen}
 				onConfirm={handleDeleteIncomeConfirm}
 				title="Delete Income Source"
-				description="Are you sure you want to delete this income source?"
+				description={`Are you sure you want to delete "${currentIncomeSource.name}"?`}
 				itemName={currentIncomeSource.name}
 			/>
 
@@ -396,11 +397,9 @@ export default function BudgetPlannerPage() {
 				onOpenChange={setIsDeleteBudgetOpen}
 				onConfirm={handleDeleteBudgetConfirm}
 				title="Delete Budget Allocation"
-				description="Are you sure you want to delete this budget allocation?"
+				description={`Are you sure you want to delete "${currentBudgetAllocation.name}"?`}
 				itemName={currentBudgetAllocation.name}
 			/>
-		</div>
+		</AppLayout>
 	);
-
-	return <AppLayout session={session}>{BudgetPlannerContent}</AppLayout>;
 }

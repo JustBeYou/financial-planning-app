@@ -19,7 +19,12 @@ export function IncomeSourceTable({
 }: IncomeSourceTableProps) {
 	// Table columns configuration for income sources
 	const columns: Column<IncomeSource>[] = [
-		{ header: "Name", accessorKey: "name" },
+		{
+			header: "Name",
+			accessorKey: "name",
+			sortable: true,
+			sortValue: (row) => row.name,
+		},
 		{
 			header: "Amount",
 			accessorKey: (income) => (
@@ -27,11 +32,20 @@ export function IncomeSourceTable({
 					{income.amount.toLocaleString()} {income.currency}
 				</span>
 			),
+			sortable: true,
+			sortValue: (row) => row.amount,
 		},
-		{ header: "Type", accessorKey: "type" },
+		{
+			header: "Type",
+			accessorKey: "type",
+			sortable: true,
+			sortValue: (row) => row.type,
+		},
 		{
 			header: "Tax %",
 			accessorKey: (income) => `${income.taxPercentage}%`,
+			sortable: true,
+			sortValue: (row) => row.taxPercentage,
 		},
 		{
 			header: "Net Amount Monthly",
@@ -44,6 +58,14 @@ export function IncomeSourceTable({
 					income.type === "monthly" ? netAmount : netAmount / 12;
 
 				return `${Math.round(monthlyNetAmount).toLocaleString()} ${income.currency}`;
+			},
+			sortable: true,
+			sortValue: (income) => {
+				// Calculate net amount after tax
+				const netAmount = income.amount * (1 - income.taxPercentage / 100);
+
+				// Convert to monthly value if it's a yearly income
+				return income.type === "monthly" ? netAmount : netAmount / 12;
 			},
 		},
 	];
@@ -65,6 +87,8 @@ export function IncomeSourceTable({
 				onEdit={onEdit}
 				onDelete={onDelete}
 				emptyMessage="No income sources. Click 'Add' to create one."
+				defaultSortColumn="Net Amount Monthly"
+				defaultSortDirection="desc"
 			/>
 		</Card>
 	);

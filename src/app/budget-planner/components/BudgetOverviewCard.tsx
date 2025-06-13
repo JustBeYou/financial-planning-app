@@ -39,7 +39,7 @@ export function BudgetOverviewCard({
 		<Card className="p-6">
 			<div className="mb-6 flex items-center justify-between">
 				<h2 className="font-bold text-2xl">{title}</h2>
-				<div className="text-right space-y-2">
+				<div className="space-y-2 text-right">
 					<div>
 						<div className="text-muted-foreground text-sm">Total Income</div>
 						<div className="font-bold text-accent-lime text-xl">
@@ -48,7 +48,7 @@ export function BudgetOverviewCard({
 					</div>
 					<div>
 						<div className="text-muted-foreground text-sm">Total Spent</div>
-						<div className="font-bold text-orange-500 text-lg">
+						<div className="font-bold text-lg text-orange-500">
 							{Math.round(totalSpentIncome).toLocaleString()} {currency}
 						</div>
 					</div>
@@ -74,17 +74,19 @@ export function BudgetOverviewCard({
 						{allocationsWithRemaining.map((item, index) => (
 							<div
 								key={item.id}
-								className={`flex items-center justify-between ${item.id === "remaining"
-									? "mt-4 border-t pt-3 font-medium"
-									: ""
-									}`}
+								className={`flex items-center justify-between ${
+									item.id === "remaining"
+										? "mt-4 border-t pt-3 font-medium"
+										: ""
+								}`}
 							>
 								<div className="flex items-center gap-2">
 									<div
-										className={`h-4 w-4 rounded-sm ${item.id === "remaining"
-											? REMAINING_COLOR
-											: ALLOCATION_COLORS[index % ALLOCATION_COLORS.length]
-											}`}
+										className={`h-4 w-4 rounded-sm ${
+											item.id === "remaining"
+												? REMAINING_COLOR
+												: ALLOCATION_COLORS[index % ALLOCATION_COLORS.length]
+										}`}
 									/>
 									<span>{item.name}</span>
 								</div>
@@ -93,10 +95,11 @@ export function BudgetOverviewCard({
 										{Math.round(item.percentage)}%
 									</span>
 									<span
-										className={`${item.id === "remaining"
-											? `font-bold ${remainingIncome >= 0 ? "text-accent-lime" : "text-red-500"}`
-											: "font-medium"
-											}`}
+										className={`${
+											item.id === "remaining"
+												? `font-bold ${remainingIncome >= 0 ? "text-accent-lime" : "text-red-500"}`
+												: "font-medium"
+										}`}
 									>
 										{Math.round(item.amount).toLocaleString()} {currency}
 									</span>
