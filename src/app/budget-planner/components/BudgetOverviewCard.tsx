@@ -1,5 +1,5 @@
 import { Card } from "~/app/_components/ui/card";
-import { ALLOCATION_COLORS, REMAINING_COLOR } from "./types";
+import { REMAINING_COLOR, getAllocationColor } from "./types";
 import type { AllocationItem } from "./types";
 
 interface BudgetOverviewCardProps {
@@ -59,10 +59,10 @@ export function BudgetOverviewCard({
 				<>
 					{/* Visual representation */}
 					<div className="mb-4 flex h-8 w-full overflow-hidden rounded-lg">
-						{allocationsWithRemaining.map((item, index) => (
+						{allocationsWithRemaining.map((item) => (
 							<div
 								key={item.id}
-								className={`${item.id === "remaining" ? REMAINING_COLOR : ALLOCATION_COLORS[index % ALLOCATION_COLORS.length]}`}
+								className={`${item.id === "remaining" ? REMAINING_COLOR : getAllocationColor(item.id)}`}
 								style={{ width: `${item.percentage}%` }}
 								title={`${item.name}: ${Math.round(item.percentage)}%`}
 							/>
@@ -71,7 +71,7 @@ export function BudgetOverviewCard({
 
 					{/* Legend and details */}
 					<div className="space-y-2">
-						{allocationsWithRemaining.map((item, index) => (
+						{allocationsWithRemaining.map((item) => (
 							<div
 								key={item.id}
 								className={`flex items-center justify-between ${
@@ -85,7 +85,7 @@ export function BudgetOverviewCard({
 										className={`h-4 w-4 rounded-sm ${
 											item.id === "remaining"
 												? REMAINING_COLOR
-												: ALLOCATION_COLORS[index % ALLOCATION_COLORS.length]
+												: getAllocationColor(item.id)
 										}`}
 									/>
 									<span>{item.name}</span>

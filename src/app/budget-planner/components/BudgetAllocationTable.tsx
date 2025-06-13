@@ -10,7 +10,7 @@ import { useState } from "react";
 import { Button } from "~/app/_components/ui/button";
 import { Card } from "~/app/_components/ui/card";
 import { type Column, DataTable } from "~/app/_components/ui/data-table";
-import { ALLOCATION_COLORS } from "./types";
+import { getAllocationColor } from "./types";
 import type { BudgetAllocation, Spending } from "./types";
 
 interface BudgetAllocationTableProps {
@@ -88,7 +88,6 @@ export function BudgetAllocationTable({
 		{
 			header: "Name",
 			accessorKey: (row: BudgetAllocation) => {
-				const index = budgetAllocations.findIndex((item) => item.id === row.id);
 				const isExpanded = expandedAllocations.has(row.id);
 
 				return (
@@ -106,7 +105,7 @@ export function BudgetAllocationTable({
 							)}
 						</Button>
 						<div
-							className={`h-4 w-4 rounded-sm ${ALLOCATION_COLORS[index % ALLOCATION_COLORS.length]}`}
+							className={`h-4 w-4 rounded-sm ${getAllocationColor(row.id)}`}
 						/>
 						<span>{row.name}</span>
 					</div>
