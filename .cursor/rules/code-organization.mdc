@@ -1,5 +1,20 @@
 ---
-description:
-globs:
+description: 
+globs: 
 alwaysApply: false
 ---
+# Code Organization
+
+- Keep code modular and DRY
+- Group functionality by domain (feature-first/domain-driven)
+- Use absolute imports with `~/` alias
+- Check for existing code before adding new features
+- Split UI components into:
+  - Smart components (business logic, API fetching)
+  - Dumb components (UI only, props-based)
+- Keep files under 500 lines
+- Directory structure:
+  - `src/app`: Public frontend
+  - `src/app/components`: Reusable components
+  - `src/server`: Backend
+  - `src/lib`: Shared business logic
