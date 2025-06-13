@@ -146,7 +146,7 @@ export function BudgetAllocationTable({
 			sortValue: (budget) => calculateEffectiveMonthlyAmount(budget),
 		},
 		{
-			header: "Spending Status",
+			header: "Monthly Spendings",
 			accessorKey: (budget) => {
 				const effectiveAmount = calculateEffectiveMonthlyAmount(budget);
 				const { monthlySpent } = calculateSpendingTotals(budget.id, budget);
@@ -180,11 +180,10 @@ export function BudgetAllocationTable({
 										{budget.currency}
 									</span>
 									<span
-										className={`rounded px-2 py-1 text-xs ${
-											remainingAmount >= 0
+										className={`rounded px-2 py-1 text-xs ${remainingAmount >= 0
 												? "bg-accent-lime/20 text-accent-lime"
 												: "bg-accent-coral/20 text-accent-coral"
-										}`}
+											}`}
 									>
 										{Math.round(100 - spentPercentage)}%
 									</span>
