@@ -20,6 +20,26 @@ export interface BudgetAllocation {
 	valueType: BudgetValueType;
 }
 
+// New spending interface
+export interface Spending {
+	id: number;
+	allocationId: number;
+	name: string;
+	amount: number;
+	currency: string;
+	date: string;
+	description?: string;
+	category?: string;
+}
+
+// Extended budget allocation with spending information
+export interface BudgetAllocationWithSpendings extends BudgetAllocation {
+	spendings: Spending[];
+	totalSpent: number;
+	remainingAmount: number;
+	isRealized: boolean;
+}
+
 export interface AllocationItem {
 	id: string;
 	name: string;

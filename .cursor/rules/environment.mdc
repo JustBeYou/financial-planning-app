@@ -1,13 +1,13 @@
 ---
 description: 
 globs: 
-alwaysApply: false
+alwaysApply: true
 ---
 ---
-alwaysApply: false
+description: Environment Configuration
+globs: ["package.json", ".nvmrc", "tsconfig.json", "biome.jsonc", ".env*", "**/*.config.{js,ts}"]
+alwaysApply: true
 ---
-
-# Environment Configuration
 
 - Use Node.js v22 (specified in .nvmrc)
 - Use TypeScript v5

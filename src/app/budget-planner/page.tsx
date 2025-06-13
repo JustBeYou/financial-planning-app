@@ -11,6 +11,7 @@ import { BudgetAllocationTable } from "./components/BudgetAllocationTable";
 import { BudgetOverviewCard } from "./components/BudgetOverviewCard";
 import { IncomeSourceForm } from "./components/IncomeSourceForm";
 import { IncomeSourceTable } from "./components/IncomeSourceTable";
+import { SpendingForm } from "./components/SpendingForm";
 import {
 	calculateMonthlyAllocations,
 	calculateTotalMonthlyBudget,
@@ -19,7 +20,11 @@ import {
 	calculateTotalYearlyIncome,
 	calculateYearlyAllocations,
 } from "./components/calculations";
-import type { BudgetAllocation, IncomeSource } from "./components/types";
+import type {
+	BudgetAllocation,
+	IncomeSource,
+	Spending,
+} from "./components/types";
 
 export default function BudgetPlannerPage() {
 	const { data: session, status } = useSession();
@@ -88,6 +93,49 @@ export default function BudgetPlannerPage() {
 			type: "monthly",
 			valueType: "absolute",
 		});
+
+	// Spending state management
+	const [isAddSpendingOpen, setIsAddSpendingOpen] = useState(false);
+	const [isEditSpendingOpen, setIsEditSpendingOpen] = useState(false);
+	const [isDeleteSpendingOpen, setIsDeleteSpendingOpen] = useState(false);
+	const [currentSpending, setCurrentSpending] = useState<Omit<Spending, "id">>({
+		allocationId: 0,
+		name: "",
+		amount: 0,
+		currency: "RON",
+		date: new Date().toISOString().split("T")[0] || "",
+		description: "",
+		category: "",
+	});
+
+	// Mock spending data - will be replaced with real data later
+	const [mockSpendings, setMockSpendings] = useState<{
+		[allocationId: number]: Spending[];
+	}>({
+		// Example data
+		1: [
+			{
+				id: 1,
+				allocationId: 1,
+				name: "Grocery Shopping",
+				amount: 350,
+				currency: "RON",
+				date: "2024-01-15",
+				description: "Weekly groceries",
+				category: "Food",
+			},
+			{
+				id: 2,
+				allocationId: 1,
+				name: "Restaurant",
+				amount: 120,
+				currency: "RON",
+				date: "2024-01-20",
+				description: "Dinner with friends",
+				category: "Food",
+			},
+		],
+	});
 
 	// Show loading state while checking session
 	if (status === "loading") {
@@ -296,6 +344,98 @@ export default function BudgetPlannerPage() {
 		setIsDeleteBudgetOpen(false);
 	};
 
+	// Spending handlers
+	const handleAddSpending = (allocationId: number) => {
+		setCurrentSpending({
+			allocationId,
+			name: "",
+			amount: 0,
+			currency: "RON",
+			date: new Date().toISOString().split("T")[0] || "",
+			description: "",
+			category: "",
+		});
+		setIsAddSpendingOpen(true);
+	};
+
+	const handleEditSpending = (spending: Spending) => {
+		setCurrentSpending({
+			allocationId: spending.allocationId,
+			name: spending.name,
+			amount: spending.amount,
+			currency: spending.currency,
+			date: spending.date,
+			description: spending.description,
+			category: spending.category,
+		});
+		setIsEditSpendingOpen(true);
+	};
+
+	const handleDeleteSpending = (spending: Spending) => {
+		setCurrentSpending({
+			allocationId: spending.allocationId,
+			name: spending.name,
+			amount: spending.amount,
+			currency: spending.currency,
+			date: spending.date,
+			description: spending.description,
+			category: spending.category,
+		});
+		setIsDeleteSpendingOpen(true);
+	};
+
+	const handleSpendingInputChange = (
+		e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>,
+	) => {
+		const { name, value } = e.target;
+		setCurrentSpending((prev) => ({
+			...prev,
+			[name]: name === "amount" ? Number(value) : value,
+		}));
+	};
+
+	const handleAddSpendingSubmit = () => {
+		const newSpending: Spending = {
+			id: Date.now(), // Mock ID generation
+			...currentSpending,
+		};
+
+		setMockSpendings((prev) => ({
+			...prev,
+			[currentSpending.allocationId]: [
+				...(prev[currentSpending.allocationId] || []),
+				newSpending,
+			],
+		}));
+		setIsAddSpendingOpen(false);
+	};
+
+	const handleEditSpendingSubmit = () => {
+		setMockSpendings((prev) => ({
+			...prev,
+			[currentSpending.allocationId]: (
+				prev[currentSpending.allocationId] || []
+			).map((s) =>
+				s.id === Date.now() // This is a mock - in real app, would use proper ID
+					? { id: s.id, ...currentSpending }
+					: s,
+			),
+		}));
+		setIsEditSpendingOpen(false);
+	};
+
+	const handleDeleteSpendingConfirm = () => {
+		setMockSpendings((prev) => ({
+			...prev,
+			[currentSpending.allocationId]: (
+				prev[currentSpending.allocationId] || []
+			).filter(
+				(s) => s.name !== currentSpending.name, // Mock filtering - in real app would use proper ID
+			),
+		}));
+		setIsDeleteSpendingOpen(false);
+	};
+
 	return (
 		<AppLayout session={session}>
 			<div className="container mx-auto space-y-6 p-6">
@@ -334,6 +474,10 @@ export default function BudgetPlannerPage() {
 						onAdd={handleAddBudget}
 						onEdit={handleEditBudget}
 						onDelete={handleDeleteBudget}
+						onAddSpending={handleAddSpending}
+						onEditSpending={handleEditSpending}
+						onDeleteSpending={handleDeleteSpending}
+						mockSpendings={mockSpendings}
 					/>
 				</div>
 			</div>
@@ -382,6 +526,27 @@ export default function BudgetPlannerPage() {
 				onSubmit={handleEditBudgetSubmit}
 			/>
 
+			{/* Spending Forms */}
+			<SpendingForm
+				spending={currentSpending}
+				onInputChange={handleSpendingInputChange}
+				onSubmit={handleAddSpendingSubmit}
+				onCancel={() => setIsAddSpendingOpen(false)}
+				isEdit={false}
+				isOpen={isAddSpendingOpen}
+				onOpenChange={setIsAddSpendingOpen}
+			/>
+
+			<SpendingForm
+				spending={currentSpending}
+				onInputChange={handleSpendingInputChange}
+				onSubmit={handleEditSpendingSubmit}
+				onCancel={() => setIsEditSpendingOpen(false)}
+				isEdit={true}
+				isOpen={isEditSpendingOpen}
+				onOpenChange={setIsEditSpendingOpen}
+			/>
+
 			{/* Delete Confirmation Dialogs */}
 			<ConfirmDeleteDialog
 				open={isDeleteIncomeOpen}
@@ -399,6 +564,15 @@ export default function BudgetPlannerPage() {
 				title="Delete Budget Allocation"
 				description={`Are you sure you want to delete "${currentBudgetAllocation.name}"?`}
 				itemName={currentBudgetAllocation.name}
+			/>
+
+			<ConfirmDeleteDialog
+				open={isDeleteSpendingOpen}
+				onOpenChange={setIsDeleteSpendingOpen}
+				onConfirm={handleDeleteSpendingConfirm}
+				title="Delete Spending"
+				description={`Are you sure you want to delete "${currentSpending.name}"?`}
+				itemName={currentSpending.name}
 			/>
 		</AppLayout>
 	);

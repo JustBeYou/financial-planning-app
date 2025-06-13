@@ -1,13 +1,13 @@
 ---
 description: 
 globs: 
-alwaysApply: false
+alwaysApply: true
 ---
 ---
-alwaysApply: false
+description: Code organization
+globs: ["**/*.{ts,tsx,js,jsx}", "!node_modules/**", "!.next/**", "!**/*.d.ts"]
+alwaysApply: true
 ---
-
-# Code Organization
 
 - Keep code modular and DRY
 - Group functionality by domain (feature-first/domain-driven)

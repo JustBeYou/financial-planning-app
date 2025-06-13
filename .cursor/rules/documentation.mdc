@@ -1,9 +1,13 @@
 ---
 description: 
 globs: 
-alwaysApply: false
+alwaysApply: true
 ---
-# Documentation Guidelines
+---
+description: Documentation guidelines
+globs: ["**/*.{ts,tsx,js,jsx}", "**/*.md", "specs/**/*", "README.md"]
+alwaysApply: true
+---
 
 - Use docblocks (`/** */`) for functions, types, and modules
 - Avoid unnecessary inline comments

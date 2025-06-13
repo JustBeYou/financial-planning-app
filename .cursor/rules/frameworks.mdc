@@ -1,13 +1,13 @@
 ---
 description: 
 globs: 
-alwaysApply: false
+alwaysApply: true
 ---
 ---
-alwaysApply: false
+description: Framework and Libraries
+globs: 
+alwaysApply: true
 ---
-
-# Framework and Libraries
 
 - Use Next.js v15
 - Use React v19

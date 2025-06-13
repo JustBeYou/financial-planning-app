@@ -1,13 +1,13 @@
 ---
 description: 
 globs: 
-alwaysApply: false
+alwaysApply: true
 ---
 ---
-alwaysApply: false
+description: Git Commit Guidelines
+globs: ["**/*", "!node_modules/**", "!.next/**", "!**/*.log", "!**/*.cache"]
+alwaysApply: true
 ---
-
-# Git Commit Guidelines
 
 ## Format
 - Subject line: Under 50 characters, imperative mood
