@@ -3,6 +3,10 @@ description:
 globs: 
 alwaysApply: false
 ---
+---
+alwaysApply: false
+---
+
 # Framework and Libraries
 
 - Use Next.js v15

@@ -3,6 +3,10 @@ description:
 globs: 
 alwaysApply: false
 ---
+---
+alwaysApply: false
+---
+
 # Code Organization
 
 - Keep code modular and DRY

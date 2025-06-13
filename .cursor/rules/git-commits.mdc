@@ -3,6 +3,10 @@ description:
 globs: 
 alwaysApply: false
 ---
+---
+alwaysApply: false
+---
+
 # Git Commit Guidelines
 
 ## Format
