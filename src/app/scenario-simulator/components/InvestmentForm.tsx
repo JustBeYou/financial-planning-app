@@ -1,5 +1,6 @@
 import { PlusCircle } from "lucide-react";
 import { Button } from "~/app/_components/ui/button";
+import { CurrencyInput } from "~/app/_components/ui/currency-input";
 import { Input } from "~/app/_components/ui/input";
 import type { Investment } from "../types";
 
@@ -7,6 +8,9 @@ interface InvestmentFormProps {
 	newInvestment: Omit<Investment, "id">;
 	onInvestmentChange: (investment: Omit<Investment, "id">) => void;
 	onAddInvestment: () => void;
+	isEditing?: boolean;
+	onUpdateInvestment?: () => void;
+	onCancelEdit?: () => void;
 }
 
 export function InvestmentForm({
@@ -37,17 +41,17 @@ export function InvestmentForm({
 					<label className="mb-1 block text-sm" htmlFor="initialAmount">
 						Initial Amount
 					</label>
-					<Input
+					<CurrencyInput
 						id="initialAmount"
-						type="number"
 						value={newInvestment.initialAmount}
-						onChange={(e) =>
+						onChange={(value) =>
 							onInvestmentChange({
 								...newInvestment,
-								initialAmount: Number(e.target.value),
+								initialAmount: value,
 							})
 						}
 						placeholder="0"
+						showCurrency
 					/>
 				</div>
 			</div>
@@ -57,17 +61,17 @@ export function InvestmentForm({
 					<label className="mb-1 block text-sm" htmlFor="monthlyContribution">
 						Monthly Contribution
 					</label>
-					<Input
+					<CurrencyInput
 						id="monthlyContribution"
-						type="number"
 						value={newInvestment.monthlyContribution}
-						onChange={(e) =>
+						onChange={(value) =>
 							onInvestmentChange({
 								...newInvestment,
-								monthlyContribution: Number(e.target.value),
+								monthlyContribution: value,
 							})
 						}
 						placeholder="0"
+						showCurrency
 					/>
 				</div>
 				<div>

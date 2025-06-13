@@ -5,9 +5,25 @@ import type {
 	SimulationResult,
 } from "../types";
 
+// Calculate the effective loan amount after lump sum payment
+export const calculateEffectiveLoanAmount = (loan: Loan | Omit<Loan, "id">) => {
+	let effectivePrincipal = loan.loanAmount;
+
+	if (loan.lumpSumPayment > 0) {
+		if (loan.lumpSumType === "percentage") {
+			const lumpSumAmount = (loan.lumpSumPayment / 100) * loan.loanAmount;
+			effectivePrincipal = loan.loanAmount - lumpSumAmount;
+		} else {
+			effectivePrincipal = loan.loanAmount - loan.lumpSumPayment;
+		}
+	}
+
+	return Math.max(0, effectivePrincipal);
+};
+
 // Calculate monthly payment for a loan
 export const calculateMonthlyPayment = (loan: Loan | Omit<Loan, "id">) => {
-	const principal = loan.loanAmount;
+	const principal = calculateEffectiveLoanAmount(loan);
 	const monthlyRate = loan.interestRate / 100 / 12;
 	const payments = loan.periodMonths;
 
@@ -67,7 +83,7 @@ export const runFinancialSimulation = (
 	let currentLoans = loans.map((loan) => ({
 		id: loan.id,
 		name: loan.name,
-		balance: loan.loanAmount,
+		balance: calculateEffectiveLoanAmount(loan),
 		monthlyPayment: calculateMonthlyPayment(loan),
 		extraPayment: loan.extraMonthlyPayment,
 	}));

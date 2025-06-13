@@ -1,5 +1,6 @@
 import { Button } from "~/app/_components/ui/button";
 import { Card } from "~/app/_components/ui/card";
+import { CurrencyInput } from "~/app/_components/ui/currency-input";
 import { Input } from "~/app/_components/ui/input";
 import type { FinancialSummary as FinancialSummaryType } from "../types";
 import { FinancialSummary } from "./FinancialSummary";
@@ -31,14 +32,14 @@ export function SimulationSettings({
 						className="mb-1 block text-sm"
 						htmlFor="monthlyDisposableIncome"
 					>
-						Monthly Disposable Income (RON)
+						Monthly Disposable Income
 					</label>
-					<Input
+					<CurrencyInput
 						id="monthlyDisposableIncome"
-						type="number"
 						value={monthlyDisposableIncome}
-						onChange={(e) => onDisposableIncomeChange(Number(e.target.value))}
+						onChange={onDisposableIncomeChange}
 						placeholder="0"
+						showCurrency
 					/>
 				</div>
 				<div>

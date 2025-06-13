@@ -13,6 +13,8 @@ export type Loan = {
 	interestRate: number;
 	periodMonths: number;
 	extraMonthlyPayment: number;
+	lumpSumPayment: number;
+	lumpSumType: "amount" | "percentage";
 };
 
 export type SimulationResult = {

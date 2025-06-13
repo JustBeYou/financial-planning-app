@@ -9,6 +9,7 @@ interface InvestmentsSectionProps {
 	onInvestmentChange: (investment: Omit<Investment, "id">) => void;
 	onAddInvestment: () => void;
 	onRemoveInvestment: (id: string) => void;
+	onEditInvestment: (investment: Investment) => void;
 }
 
 export function InvestmentsSection({
@@ -17,6 +18,7 @@ export function InvestmentsSection({
 	onInvestmentChange,
 	onAddInvestment,
 	onRemoveInvestment,
+	onEditInvestment,
 }: InvestmentsSectionProps) {
 	return (
 		<Card className="p-6">
@@ -26,6 +28,7 @@ export function InvestmentsSection({
 				<InvestmentList
 					investments={investments}
 					onRemoveInvestment={onRemoveInvestment}
+					onEditInvestment={onEditInvestment}
 				/>
 
 				<InvestmentForm

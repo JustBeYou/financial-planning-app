@@ -9,6 +9,7 @@ interface LoansSectionProps {
 	onLoanChange: (loan: Omit<Loan, "id">) => void;
 	onAddLoan: () => void;
 	onRemoveLoan: (id: string) => void;
+	onEditLoan: (loan: Loan) => void;
 }
 
 export function LoansSection({
@@ -17,13 +18,14 @@ export function LoansSection({
 	onLoanChange,
 	onAddLoan,
 	onRemoveLoan,
+	onEditLoan,
 }: LoansSectionProps) {
 	return (
 		<Card className="p-6">
 			<h2 className="mb-4 font-bold text-xl">Loans</h2>
 
 			<div className="space-y-4">
-				<LoanList loans={loans} onRemoveLoan={onRemoveLoan} />
+				<LoanList loans={loans} onRemoveLoan={onRemoveLoan} onEditLoan={onEditLoan} />
 
 				<LoanForm
 					newLoan={newLoan}

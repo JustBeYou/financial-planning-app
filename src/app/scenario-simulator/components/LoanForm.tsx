@@ -1,6 +1,8 @@
 import { PlusCircle } from "lucide-react";
 import { Button } from "~/app/_components/ui/button";
+import { CurrencyInput } from "~/app/_components/ui/currency-input";
 import { Input } from "~/app/_components/ui/input";
+import { Select } from "~/app/_components/ui/select";
 import type { Loan } from "../types";
 import { calculateMonthlyPayment } from "../utils/calculations";
 
@@ -14,8 +16,8 @@ export function LoanForm({ newLoan, onLoanChange, onAddLoan }: LoanFormProps) {
 	// Calculate expected monthly payment for new loan
 	const newLoanMonthlyPayment =
 		newLoan.loanAmount &&
-		newLoan.periodMonths &&
-		newLoan.interestRate !== undefined
+			newLoan.periodMonths &&
+			newLoan.interestRate !== undefined
 			? calculateMonthlyPayment(newLoan as Loan)
 			: 0;
 
@@ -37,17 +39,17 @@ export function LoanForm({ newLoan, onLoanChange, onAddLoan }: LoanFormProps) {
 					<label className="mb-1 block text-sm" htmlFor="loanAmount">
 						Loan Amount
 					</label>
-					<Input
+					<CurrencyInput
 						id="loanAmount"
-						type="number"
 						value={newLoan.loanAmount}
-						onChange={(e) =>
+						onChange={(value) =>
 							onLoanChange({
 								...newLoan,
-								loanAmount: Number(e.target.value),
+								loanAmount: value,
 							})
 						}
 						placeholder="0"
+						showCurrency
 					/>
 				</div>
 			</div>
@@ -91,18 +93,77 @@ export function LoanForm({ newLoan, onLoanChange, onAddLoan }: LoanFormProps) {
 					<label className="mb-1 block text-sm" htmlFor="extraMonthlyPayment">
 						Extra Payment
 					</label>
-					<Input
+					<CurrencyInput
 						id="extraMonthlyPayment"
-						type="number"
 						value={newLoan.extraMonthlyPayment}
-						onChange={(e) =>
+						onChange={(value) =>
 							onLoanChange({
 								...newLoan,
-								extraMonthlyPayment: Number(e.target.value),
+								extraMonthlyPayment: value,
 							})
 						}
 						placeholder="0"
+						showCurrency
 					/>
+				</div>
+			</div>
+
+			{/* Lump Sum Payment Section */}
+			<div className="space-y-2">
+				<h4 className="font-medium text-sm">Lump Sum Payment (Optional)</h4>
+				<div className="grid grid-cols-2 gap-2">
+					<div>
+						<label className="mb-1 block text-sm" htmlFor="lumpSumType">
+							Payment Type
+						</label>
+						<Select
+							id="lumpSumType"
+							value={newLoan.lumpSumType}
+							onChange={(e) =>
+								onLoanChange({
+									...newLoan,
+									lumpSumType: e.target.value as "amount" | "percentage",
+								})
+							}
+							options={[
+								{ value: "amount", label: "Fixed Amount" },
+								{ value: "percentage", label: "Percentage" },
+							]}
+						/>
+					</div>
+					<div>
+						<label className="mb-1 block text-sm" htmlFor="lumpSumPayment">
+							{newLoan.lumpSumType === "percentage" ? "Percentage (%)" : "Amount"}
+						</label>
+						{newLoan.lumpSumType === "percentage" ? (
+							<Input
+								id="lumpSumPayment"
+								type="number"
+								value={newLoan.lumpSumPayment}
+								onChange={(e) =>
+									onLoanChange({
+										...newLoan,
+										lumpSumPayment: Number(e.target.value),
+									})
+								}
+								placeholder="0"
+								max="100"
+							/>
+						) : (
+							<CurrencyInput
+								id="lumpSumPayment"
+								value={newLoan.lumpSumPayment}
+								onChange={(value) =>
+									onLoanChange({
+										...newLoan,
+										lumpSumPayment: value,
+									})
+								}
+								placeholder="0"
+								showCurrency
+							/>
+						)}
+					</div>
 				</div>
 			</div>
 

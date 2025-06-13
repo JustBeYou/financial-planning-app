@@ -56,6 +56,10 @@ export default function ScenarioSimulator() {
 		description: "",
 	});
 
+	// Edit states
+	const [editingInvestment, setEditingInvestment] = useState<Investment | null>(null);
+	const [editingLoan, setEditingLoan] = useState<Loan | null>(null);
+
 	// Form states
 	const [newInvestment, setNewInvestment] = useState<Omit<Investment, "id">>({
 		name: "",
@@ -70,6 +74,8 @@ export default function ScenarioSimulator() {
 		interestRate: 0,
 		periodMonths: 0,
 		extraMonthlyPayment: 0,
+		lumpSumPayment: 0,
+		lumpSumType: "amount",
 	});
 
 	// Show error dialog
@@ -111,6 +117,47 @@ export default function ScenarioSimulator() {
 		setInvestments(investments.filter((inv) => inv.id !== id));
 	};
 
+	const handleEditInvestment = (investment: Investment) => {
+		setEditingInvestment(investment);
+		setNewInvestment({
+			name: investment.name,
+			initialAmount: investment.initialAmount,
+			monthlyContribution: investment.monthlyContribution,
+			yearlyInterestRate: investment.yearlyInterestRate,
+		});
+	};
+
+	const handleUpdateInvestment = () => {
+		if (!editingInvestment) return;
+		if (!validateInvestment(newInvestment, showErrorDialog)) return;
+
+		const updatedInvestment: Investment = {
+			...newInvestment,
+			id: editingInvestment.id,
+		};
+
+		setInvestments(investments.map(inv =>
+			inv.id === editingInvestment.id ? updatedInvestment : inv
+		));
+		setEditingInvestment(null);
+		setNewInvestment({
+			name: "",
+			initialAmount: 0,
+			monthlyContribution: 0,
+			yearlyInterestRate: 0,
+		});
+	};
+
+	const handleCancelEditInvestment = () => {
+		setEditingInvestment(null);
+		setNewInvestment({
+			name: "",
+			initialAmount: 0,
+			monthlyContribution: 0,
+			yearlyInterestRate: 0,
+		});
+	};
+
 	// Handlers for loans
 	const handleAddLoan = () => {
 		if (!validateLoan(newLoan, showErrorDialog)) return;
@@ -127,11 +174,63 @@ export default function ScenarioSimulator() {
 			interestRate: 0,
 			periodMonths: 0,
 			extraMonthlyPayment: 0,
+			lumpSumPayment: 0,
+			lumpSumType: "amount",
 		});
 	};
 
 	const handleRemoveLoan = (id: string) => {
 		setLoans(loans.filter((loan) => loan.id !== id));
+	};
+
+	const handleEditLoan = (loan: Loan) => {
+		setEditingLoan(loan);
+		setNewLoan({
+			name: loan.name,
+			loanAmount: loan.loanAmount,
+			interestRate: loan.interestRate,
+			periodMonths: loan.periodMonths,
+			extraMonthlyPayment: loan.extraMonthlyPayment,
+			lumpSumPayment: loan.lumpSumPayment,
+			lumpSumType: loan.lumpSumType,
+		});
+	};
+
+	const handleUpdateLoan = () => {
+		if (!editingLoan) return;
+		if (!validateLoan(newLoan, showErrorDialog)) return;
+
+		const updatedLoan: Loan = {
+			...newLoan,
+			id: editingLoan.id,
+		};
+
+		setLoans(loans.map(loan =>
+			loan.id === editingLoan.id ? updatedLoan : loan
+		));
+		setEditingLoan(null);
+		setNewLoan({
+			name: "",
+			loanAmount: 0,
+			interestRate: 0,
+			periodMonths: 0,
+			extraMonthlyPayment: 0,
+			lumpSumPayment: 0,
+			lumpSumType: "amount",
+		});
+	};
+
+	const handleCancelEditLoan = () => {
+		setEditingLoan(null);
+		setNewLoan({
+			name: "",
+			loanAmount: 0,
+			interestRate: 0,
+			periodMonths: 0,
+			extraMonthlyPayment: 0,
+			lumpSumPayment: 0,
+			lumpSumType: "amount",
+		});
 	};
 
 	// Calculate financial summary
