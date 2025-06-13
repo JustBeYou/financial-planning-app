@@ -25,7 +25,11 @@ export function LoansSection({
 			<h2 className="mb-4 font-bold text-xl">Loans</h2>
 
 			<div className="space-y-4">
-				<LoanList loans={loans} onRemoveLoan={onRemoveLoan} onEditLoan={onEditLoan} />
+				<LoanList
+					loans={loans}
+					onRemoveLoan={onRemoveLoan}
+					onEditLoan={onEditLoan}
+				/>
 
 				<LoanForm
 					newLoan={newLoan}

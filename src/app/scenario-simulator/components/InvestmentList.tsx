@@ -27,9 +27,9 @@ export function InvestmentList({
 					<div className="flex-1">
 						<div className="font-semibold">{investment.name}</div>
 						<div className="text-sm text-text-gray">
-							Initial: {investment.initialAmount.toLocaleString()} RON | Monthly:{" "}
-							{investment.monthlyContribution.toLocaleString()} RON | Rate:{" "}
-							{investment.yearlyInterestRate}%
+							Initial: {investment.initialAmount.toLocaleString()} RON |
+							Monthly: {investment.monthlyContribution.toLocaleString()} RON |
+							Rate: {investment.yearlyInterestRate}%
 						</div>
 					</div>
 					<div className="flex gap-1">

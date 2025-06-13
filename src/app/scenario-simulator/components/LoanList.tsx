@@ -1,7 +1,10 @@
 import { Edit, X } from "lucide-react";
 import { Button } from "~/app/_components/ui/button";
 import type { Loan } from "../types";
-import { calculateEffectiveLoanAmount, calculateMonthlyPayment } from "../utils/calculations";
+import {
+	calculateEffectiveLoanAmount,
+	calculateMonthlyPayment,
+} from "../utils/calculations";
 
 interface LoanListProps {
 	loans: Loan[];
@@ -29,10 +32,12 @@ export function LoanList({ loans, onRemoveLoan, onEditLoan }: LoanListProps) {
 						</div>
 						{loan.lumpSumPayment > 0 && (
 							<div className="text-sm text-text-gray">
-								Lump Sum: {loan.lumpSumType === "percentage"
+								Lump Sum:{" "}
+								{loan.lumpSumType === "percentage"
 									? `${loan.lumpSumPayment}%`
-									: `${loan.lumpSumPayment.toLocaleString()} RON`}
-								{" "}(Effective Amount: {calculateEffectiveLoanAmount(loan).toLocaleString()} RON)
+									: `${loan.lumpSumPayment.toLocaleString()} RON`}{" "}
+								(Effective Amount:{" "}
+								{calculateEffectiveLoanAmount(loan).toLocaleString()} RON)
 							</div>
 						)}
 						<div className="mt-1 text-sm">

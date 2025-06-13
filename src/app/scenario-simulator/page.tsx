@@ -57,7 +57,9 @@ export default function ScenarioSimulator() {
 	});
 
 	// Edit states
-	const [editingInvestment, setEditingInvestment] = useState<Investment | null>(null);
+	const [editingInvestment, setEditingInvestment] = useState<Investment | null>(
+		null,
+	);
 	const [editingLoan, setEditingLoan] = useState<Loan | null>(null);
 
 	// Form states
@@ -136,9 +138,11 @@ export default function ScenarioSimulator() {
 			id: editingInvestment.id,
 		};
 
-		setInvestments(investments.map(inv =>
-			inv.id === editingInvestment.id ? updatedInvestment : inv
-		));
+		setInvestments(
+			investments.map((inv) =>
+				inv.id === editingInvestment.id ? updatedInvestment : inv,
+			),
+		);
 		setEditingInvestment(null);
 		setNewInvestment({
 			name: "",
@@ -205,9 +209,9 @@ export default function ScenarioSimulator() {
 			id: editingLoan.id,
 		};
 
-		setLoans(loans.map(loan =>
-			loan.id === editingLoan.id ? updatedLoan : loan
-		));
+		setLoans(
+			loans.map((loan) => (loan.id === editingLoan.id ? updatedLoan : loan)),
+		);
 		setEditingLoan(null);
 		setNewLoan({
 			name: "",

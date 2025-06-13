@@ -16,8 +16,8 @@ export function LoanForm({ newLoan, onLoanChange, onAddLoan }: LoanFormProps) {
 	// Calculate expected monthly payment for new loan
 	const newLoanMonthlyPayment =
 		newLoan.loanAmount &&
-			newLoan.periodMonths &&
-			newLoan.interestRate !== undefined
+		newLoan.periodMonths &&
+		newLoan.interestRate !== undefined
 			? calculateMonthlyPayment(newLoan as Loan)
 			: 0;
 
@@ -133,7 +133,9 @@ export function LoanForm({ newLoan, onLoanChange, onAddLoan }: LoanFormProps) {
 					</div>
 					<div>
 						<label className="mb-1 block text-sm" htmlFor="lumpSumPayment">
-							{newLoan.lumpSumType === "percentage" ? "Percentage (%)" : "Amount"}
+							{newLoan.lumpSumType === "percentage"
+								? "Percentage (%)"
+								: "Amount"}
 						</label>
 						{newLoan.lumpSumType === "percentage" ? (
 							<Input

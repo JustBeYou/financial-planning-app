@@ -65,17 +65,26 @@ export const validateLoan = (
 	}
 
 	if (loan.lumpSumPayment < 0) {
-		showError("Invalid Lump Sum Payment", "Lump sum payment cannot be negative.");
+		showError(
+			"Invalid Lump Sum Payment",
+			"Lump sum payment cannot be negative.",
+		);
 		return false;
 	}
 
 	if (loan.lumpSumType === "percentage" && loan.lumpSumPayment > 100) {
-		showError("Invalid Lump Sum Percentage", "Lump sum percentage cannot exceed 100%.");
+		showError(
+			"Invalid Lump Sum Percentage",
+			"Lump sum percentage cannot exceed 100%.",
+		);
 		return false;
 	}
 
 	if (loan.lumpSumType === "amount" && loan.lumpSumPayment >= loan.loanAmount) {
-		showError("Invalid Lump Sum Amount", "Lump sum amount cannot be greater than or equal to the loan amount.");
+		showError(
+			"Invalid Lump Sum Amount",
+			"Lump sum amount cannot be greater than or equal to the loan amount.",
+		);
 		return false;
 	}
 
