@@ -87,7 +87,12 @@ export function AppLayout({ session, children }: AppLayoutProps) {
 						</button>
 						<button
 							type="button"
-							onClick={() => signOut()}
+							onClick={async () => {
+								// Invalidate all queries to clear the cache
+								await utils.invalidate();
+								// Sign out
+								await signOut({ callbackUrl: "/overview-dashboard" });
+							}}
 							className="rounded-full bg-secondary-slate px-6 py-2 font-semibold transition hover:bg-primary-teal"
 						>
 							Sign Out
