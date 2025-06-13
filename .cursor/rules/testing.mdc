@@ -1,0 +1,12 @@
+---
+description:
+globs:
+alwaysApply: false
+---
+# Testing Requirements
+
+- Write unit and integration tests for all functionality
+- Cover both frontend and backend logic
+- Use Vitest and testing-library for unit testing
+- Use Playwright for E2E testing
+- Prioritize meaningful test scenarios over code coverage metrics
