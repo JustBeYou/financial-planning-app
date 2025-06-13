@@ -26,21 +26,6 @@ import {
 
 export default function ScenarioSimulator() {
 	const { data: session, status } = useSession();
-
-	// Show loading state while checking session
-	if (status === "loading") {
-		return (
-			<div className="flex min-h-screen flex-col items-center justify-center bg-background text-foreground">
-				<div className="text-2xl">Loading...</div>
-			</div>
-		);
-	}
-
-	// Show login form if not authenticated
-	if (!session?.user) {
-		redirect("/overview-dashboard");
-	}
-
 	const [investments, setInvestments] = useState<Investment[]>([]);
 	const [loans, setLoans] = useState<Loan[]>([]);
 	const [monthlyDisposableIncome, setMonthlyDisposableIncome] =
@@ -79,6 +64,20 @@ export default function ScenarioSimulator() {
 		lumpSumPayment: 0,
 		lumpSumType: "amount",
 	});
+
+	// Show loading state while checking session
+	if (status === "loading") {
+		return (
+			<div className="flex min-h-screen flex-col items-center justify-center bg-background text-foreground">
+				<div className="text-2xl">Loading...</div>
+			</div>
+		);
+	}
+
+	// Show login form if not authenticated
+	if (!session?.user) {
+		redirect("/overview-dashboard");
+	}
 
 	// Show error dialog
 	const showErrorDialog = (title: string, description: string) => {
