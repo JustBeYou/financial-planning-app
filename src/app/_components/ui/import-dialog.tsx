@@ -61,6 +61,14 @@ interface ImportedData {
 		currency: string;
 		type: string;
 		valueType: string;
+		spendings?: Array<{
+			name: string;
+			amount: number;
+			currency: string;
+			date: string;
+			description?: string | null;
+			category?: string | null;
+		}>;
 	}>;
 	exportDate?: string;
 }

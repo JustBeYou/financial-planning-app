@@ -10,6 +10,7 @@ import {
 	incomeSources,
 	investments,
 	realEstateEntries,
+	spendings,
 } from "~/server/db/schema";
 
 // Define the import data schema
@@ -88,6 +89,18 @@ const importDataSchema = z.object({
 				currency: z.string(),
 				type: z.string(),
 				valueType: z.string(),
+				spendings: z
+					.array(
+						z.object({
+							name: z.string(),
+							amount: z.number(),
+							currency: z.string(),
+							date: z.string(),
+							description: z.string().nullable().optional(),
+							category: z.string().nullable().optional(),
+						}),
+					)
+					.optional(),
 			}),
 		)
 		.optional(),
@@ -160,11 +173,32 @@ export const exportRouter = createTRPCRouter({
 				where: eq(incomeSources.userId, userId),
 			}),
 
-			// Budget allocations
+			// Budget allocations with spendings
 			ctx.db.query.budgetAllocations.findMany({
 				where: eq(budgetAllocations.userId, userId),
+				with: {
+					spendings: true,
+				},
 			}),
 		]);
+
+		// Process budget data to include spendings and remove internal fields
+		const processedBudgetData = budgetData.map((allocation) => ({
+			name: allocation.name,
+			value: allocation.value,
+			currency: allocation.currency,
+			type: allocation.type,
+			valueType: allocation.valueType,
+			spendings:
+				allocation.spendings?.map((spending) => ({
+					name: spending.name,
+					amount: spending.amount,
+					currency: spending.currency,
+					date: spending.date,
+					description: spending.description,
+					category: spending.category,
+				})) || [],
+		}));
 
 		// Return all data in a structured format with internal fields removed
 		return {
@@ -174,7 +208,7 @@ export const exportRouter = createTRPCRouter({
 			debt: removeInternalFields(debtData),
 			deposits: removeInternalFields(depositData),
 			income: removeInternalFields(incomeData),
-			budget: removeInternalFields(budgetData),
+			budget: processedBudgetData,
 			exportDate: new Date().toISOString(),
 		};
 	}),
@@ -188,6 +222,7 @@ export const exportRouter = createTRPCRouter({
 			// Use a transaction to ensure data consistency
 			return await db.transaction(async (tx) => {
 				// First, delete all existing user data
+				// Note: spendings will be deleted automatically due to cascade delete when budget allocations are deleted
 				await Promise.all([
 					tx.delete(cashEntries).where(eq(cashEntries.userId, userId)),
 					tx.delete(investments).where(eq(investments.userId, userId)),
@@ -287,17 +322,36 @@ export const exportRouter = createTRPCRouter({
 					}
 				}
 
-				// Import budget allocations
+				// Import budget allocations with their spendings
 				if (input.budget && input.budget.length > 0) {
 					for (const entry of input.budget) {
-						await tx.insert(budgetAllocations).values({
-							userId,
-							name: entry.name,
-							value: entry.value,
-							currency: entry.currency,
-							type: entry.type,
-							valueType: entry.valueType,
-						});
+						const result = await tx
+							.insert(budgetAllocations)
+							.values({
+								userId,
+								name: entry.name,
+								value: entry.value,
+								currency: entry.currency,
+								type: entry.type,
+								valueType: entry.valueType,
+							})
+							.returning({ id: budgetAllocations.id });
+
+						// Import spendings for this budget allocation
+						if (result[0] && entry.spendings && entry.spendings.length > 0) {
+							const allocationId = result[0].id;
+							for (const spending of entry.spendings) {
+								await tx.insert(spendings).values({
+									allocationId,
+									name: spending.name,
+									amount: spending.amount,
+									currency: spending.currency,
+									date: spending.date,
+									description: spending.description,
+									category: spending.category,
+								});
+							}
+						}
 					}
 				}
 

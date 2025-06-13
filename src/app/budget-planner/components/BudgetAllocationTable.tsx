@@ -66,13 +66,21 @@ export function BudgetAllocationTable({
 			: (totalYearlyIncome * allocation.value) / 100 / 12;
 	};
 
-	const calculateSpendingTotals = (allocationId: number) => {
+	const calculateSpendingTotals = (
+		allocationId: number,
+		allocation: BudgetAllocation,
+	) => {
 		const spendings = mockSpendings[allocationId] || [];
 		const totalSpent = spendings.reduce(
 			(sum, spending) => sum + spending.amount,
 			0,
 		);
-		return { spendings, totalSpent };
+
+		// For yearly allocations, calculate monthly equivalent of spendings
+		const monthlySpent =
+			allocation.type === "yearly" ? totalSpent / 12 : totalSpent;
+
+		return { spendings, totalSpent, monthlySpent };
 	};
 
 	// Table columns configuration for budget allocations
@@ -142,21 +150,22 @@ export function BudgetAllocationTable({
 			header: "Spending Status",
 			accessorKey: (budget) => {
 				const effectiveAmount = calculateEffectiveMonthlyAmount(budget);
-				const { totalSpent } = calculateSpendingTotals(budget.id);
-				const remainingAmount = effectiveAmount - totalSpent;
+				const { monthlySpent } = calculateSpendingTotals(budget.id, budget);
+				const remainingAmount = effectiveAmount - monthlySpent;
 				const spentPercentage =
-					effectiveAmount > 0 ? (totalSpent / effectiveAmount) * 100 : 0;
+					effectiveAmount > 0 ? (monthlySpent / effectiveAmount) * 100 : 0;
 
 				return (
 					<div className="text-sm">
-						{totalSpent > 0 ? (
+						{monthlySpent > 0 ? (
 							<div className="space-y-1">
 								<div className="flex items-center gap-2">
 									<span className="font-medium text-accent-coral">
-										{totalSpent.toLocaleString()} {budget.currency}
+										{Math.round(monthlySpent).toLocaleString()}{" "}
+										{budget.currency}
 									</span>
 									<span className="rounded bg-accent-coral/20 px-2 py-1 text-accent-coral text-xs">
-										{spentPercentage.toFixed(1)}%
+										{Math.round(spentPercentage)}%
 									</span>
 									<span className="text-text-gray">spent</span>
 								</div>
@@ -168,7 +177,8 @@ export function BudgetAllocationTable({
 												: "text-accent-coral"
 										}
 									>
-										{remainingAmount.toLocaleString()} {budget.currency}
+										{Math.round(remainingAmount).toLocaleString()}{" "}
+										{budget.currency}
 									</span>
 									<span
 										className={`rounded px-2 py-1 text-xs ${
@@ -177,7 +187,7 @@ export function BudgetAllocationTable({
 												: "bg-accent-coral/20 text-accent-coral"
 										}`}
 									>
-										{(100 - spentPercentage).toFixed(1)}%
+										{Math.round(100 - spentPercentage)}%
 									</span>
 									<span className="text-text-gray">remaining</span>
 								</div>
@@ -205,14 +215,126 @@ export function BudgetAllocationTable({
 	);
 
 	const renderExpandedContent = (allocation: BudgetAllocation) => {
-		const { spendings } = calculateSpendingTotals(allocation.id);
+		const { spendings, totalSpent, monthlySpent } = calculateSpendingTotals(
+			allocation.id,
+			allocation,
+		);
+		const effectiveMonthlyAmount = calculateEffectiveMonthlyAmount(allocation);
+		const effectiveYearlyAmount =
+			allocation.type === "monthly"
+				? effectiveMonthlyAmount * 12
+				: allocation.valueType === "absolute"
+					? allocation.value
+					: (totalYearlyIncome * allocation.value) / 100;
+
+		const monthlyRemaining = effectiveMonthlyAmount - monthlySpent;
+		const yearlyRemaining = effectiveYearlyAmount - totalSpent;
+		const monthlySpentPercentage =
+			effectiveMonthlyAmount > 0
+				? (monthlySpent / effectiveMonthlyAmount) * 100
+				: 0;
+		const yearlySpentPercentage =
+			effectiveYearlyAmount > 0
+				? (totalSpent / effectiveYearlyAmount) * 100
+				: 0;
 
 		return (
 			<div className="mb-3 ml-8 rounded-r-lg border-l-4 border-l-primary-teal bg-secondary-slate/20">
 				<div className="p-4">
 					<h4 className="mb-3 font-medium text-text-white">
-						Spendings for {allocation.name}
+						Detailed Summary for {allocation.name}
 					</h4>
+
+					{/* Budget Summary */}
+					<div className="mb-4 grid grid-cols-1 gap-4 md:grid-cols-2">
+						<div className="rounded-md bg-bg-jet p-3">
+							<h5 className="mb-2 font-medium text-sm text-text-white">
+								Monthly Budget
+							</h5>
+							<div className="space-y-1 text-sm">
+								<div className="flex justify-between">
+									<span className="text-text-gray">Allocated:</span>
+									<span className="text-text-white">
+										{Math.round(effectiveMonthlyAmount).toLocaleString()}{" "}
+										{allocation.currency}
+									</span>
+								</div>
+								<div className="flex justify-between">
+									<span className="text-text-gray">Spent:</span>
+									<span className="text-accent-coral">
+										{Math.round(monthlySpent).toLocaleString()}{" "}
+										{allocation.currency}
+									</span>
+								</div>
+								<div className="flex justify-between">
+									<span className="text-text-gray">Remaining:</span>
+									<span
+										className={
+											monthlyRemaining >= 0
+												? "text-accent-lime"
+												: "text-accent-coral"
+										}
+									>
+										{Math.round(monthlyRemaining).toLocaleString()}{" "}
+										{allocation.currency}
+									</span>
+								</div>
+								<div className="flex justify-between">
+									<span className="text-text-gray">Usage:</span>
+									<span className="text-text-white">
+										{Math.round(monthlySpentPercentage)}%
+									</span>
+								</div>
+							</div>
+						</div>
+
+						<div className="rounded-md bg-bg-jet p-3">
+							<h5 className="mb-2 font-medium text-sm text-text-white">
+								{allocation.type === "yearly"
+									? "Yearly Budget"
+									: "Yearly Projection"}
+							</h5>
+							<div className="space-y-1 text-sm">
+								<div className="flex justify-between">
+									<span className="text-text-gray">Allocated:</span>
+									<span className="text-text-white">
+										{Math.round(effectiveYearlyAmount).toLocaleString()}{" "}
+										{allocation.currency}
+									</span>
+								</div>
+								<div className="flex justify-between">
+									<span className="text-text-gray">Spent:</span>
+									<span className="text-accent-coral">
+										{Math.round(totalSpent).toLocaleString()}{" "}
+										{allocation.currency}
+									</span>
+								</div>
+								<div className="flex justify-between">
+									<span className="text-text-gray">Remaining:</span>
+									<span
+										className={
+											yearlyRemaining >= 0
+												? "text-accent-lime"
+												: "text-accent-coral"
+										}
+									>
+										{Math.round(yearlyRemaining).toLocaleString()}{" "}
+										{allocation.currency}
+									</span>
+								</div>
+								<div className="flex justify-between">
+									<span className="text-text-gray">Usage:</span>
+									<span className="text-text-white">
+										{Math.round(yearlySpentPercentage)}%
+									</span>
+								</div>
+							</div>
+						</div>
+					</div>
+
+					<h5 className="mb-3 font-medium text-text-white">
+						Individual Spendings
+					</h5>
 					{spendings.length === 0 ? (
 						<div className="py-4 text-center text-text-gray">
 							No spendings tracked for this allocation.
