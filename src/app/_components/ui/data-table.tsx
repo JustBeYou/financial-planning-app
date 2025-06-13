@@ -20,6 +20,11 @@ interface DataTableProps<T> {
 	emptyMessage?: string;
 	defaultSortColumn?: string;
 	defaultSortDirection?: "asc" | "desc";
+	expandable?: boolean;
+	expandedRows?: Set<number | string>;
+	onToggleExpand?: (itemKey: number | string) => void;
+	renderExpandedContent?: (item: T) => ReactNode;
+	customActions?: (item: T) => ReactNode;
 }
 
 export function DataTable<T>({
@@ -31,6 +36,11 @@ export function DataTable<T>({
 	emptyMessage = "No data available",
 	defaultSortColumn,
 	defaultSortDirection = "desc",
+	expandable = false,
+	expandedRows,
+	onToggleExpand,
+	renderExpandedContent,
+	customActions,
 }: DataTableProps<T>) {
 	const [sortColumn, setSortColumn] = useState<string | undefined>(
 		defaultSortColumn,
@@ -39,7 +49,7 @@ export function DataTable<T>({
 		defaultSortDirection,
 	);
 
-	const showActions = onEdit || onDelete;
+	const showActions = onEdit || onDelete || customActions;
 	const columnsCount = showActions ? columns.length + 1 : columns.length;
 
 	const handleSort = (column: Column<T>) => {
@@ -92,6 +102,11 @@ export function DataTable<T>({
 		return String(value);
 	};
 
+	const isExpanded = (item: T): boolean => {
+		if (!expandable || !expandedRows) return false;
+		return expandedRows.has(item[keyField] as number | string);
+	};
+
 	return (
 		<div className="space-y-3">
 			{/* Headers */}
@@ -102,20 +117,14 @@ export function DataTable<T>({
 				}}
 			>
 				{columns.map((column) => (
-					<span
+					<button
 						key={String(column.header)}
-						className={`flex items-center gap-1 ${
+						type="button"
+						className={`flex items-center gap-1 text-left ${
 							column.sortable ? "cursor-pointer select-none" : ""
 						} ${column.className ?? ""}`}
 						onClick={() => handleSort(column)}
-						onKeyDown={(e) => {
-							if (e.key === "Enter" || e.key === " ") {
-								e.preventDefault();
-								handleSort(column);
-							}
-						}}
-						role={column.sortable ? "button" : undefined}
-						tabIndex={column.sortable ? 0 : undefined}
+						disabled={!column.sortable}
 					>
 						{column.header}
 						{column.sortable && sortColumn === column.header && (
@@ -127,7 +136,7 @@ export function DataTable<T>({
 								)}
 							</span>
 						)}
-					</span>
+					</button>
 				))}
 				{showActions && <span className="text-right">Actions</span>}
 			</div>
@@ -136,46 +145,62 @@ export function DataTable<T>({
 			{sortedData.length === 0 ? (
 				<div className="py-4 text-center text-text-gray">{emptyMessage}</div>
 			) : (
-				sortedData.map((item) => (
-					<div
-						key={String(item[keyField])}
-						className="grid border-secondary-slate/30 border-b py-2"
-						style={{
-							gridTemplateColumns: `repeat(${columnsCount}, minmax(0, 1fr))`,
-						}}
-					>
-						{columns.map((column) => (
-							<span key={String(column.header)} className={column.className}>
-								{renderCellValue(item, column)}
-							</span>
-						))}
+				sortedData.map((item) => {
+					const itemKey = item[keyField] as number | string;
+					const expanded = isExpanded(item);
 
-						{showActions && (
-							<span className="flex justify-end gap-2">
-								{onEdit && (
-									<Button
-										variant="ghost"
-										size="icon"
-										onClick={() => onEdit(item)}
-										className="h-8 w-8"
+					return (
+						<div key={String(itemKey)}>
+							{/* Main row */}
+							<div
+								className="grid border-secondary-slate/30 border-b py-2"
+								style={{
+									gridTemplateColumns: `repeat(${columnsCount}, minmax(0, 1fr))`,
+								}}
+							>
+								{columns.map((column) => (
+									<span
+										key={String(column.header)}
+										className={column.className}
 									>
-										<Pencil className="h-4 w-4" />
-									</Button>
+										{renderCellValue(item, column)}
+									</span>
+								))}
+
+								{showActions && (
+									<span className="flex justify-end gap-2">
+										{customActions?.(item)}
+										{onEdit && (
+											<Button
+												variant="ghost"
+												size="icon"
+												onClick={() => onEdit(item)}
+												className="h-8 w-8"
+											>
+												<Pencil className="h-4 w-4" />
+											</Button>
+										)}
+										{onDelete && (
+											<Button
+												variant="ghost"
+												size="icon"
+												onClick={() => onDelete(item)}
+												className="h-8 w-8 text-accent-coral hover:text-accent-coral/80"
+											>
+												<Trash2 className="h-4 w-4" />
+											</Button>
+										)}
+									</span>
 								)}
-								{onDelete && (
-									<Button
-										variant="ghost"
-										size="icon"
-										onClick={() => onDelete(item)}
-										className="h-8 w-8 text-accent-coral hover:text-accent-coral/80"
-									>
-										<Trash2 className="h-4 w-4" />
-									</Button>
-								)}
-							</span>
-						)}
-					</div>
-				))
+							</div>
+
+							{/* Expanded content */}
+							{expandable && expanded && renderExpandedContent && (
+								<div className="mb-3">{renderExpandedContent(item)}</div>
+							)}
+						</div>
+					);
+				})
 			)}
 		</div>
 	);

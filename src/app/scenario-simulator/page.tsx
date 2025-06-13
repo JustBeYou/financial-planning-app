@@ -291,6 +291,7 @@ export default function ScenarioSimulator() {
 						onInvestmentChange={setNewInvestment}
 						onAddInvestment={handleAddInvestment}
 						onRemoveInvestment={handleRemoveInvestment}
+						onEditInvestment={handleEditInvestment}
 					/>
 
 					{/* Loans */}
@@ -300,6 +301,7 @@ export default function ScenarioSimulator() {
 						onLoanChange={setNewLoan}
 						onAddLoan={handleAddLoan}
 						onRemoveLoan={handleRemoveLoan}
+						onEditLoan={handleEditLoan}
 					/>
 				</div>
 
