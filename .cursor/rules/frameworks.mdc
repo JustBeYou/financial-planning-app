@@ -1,5 +1,15 @@
 ---
-description:
-globs:
+description: 
+globs: 
 alwaysApply: false
 ---
+# Framework and Libraries
+
+- Use Next.js v15
+- Use React v19
+- Use Tailwind CSS v4
+- Use Drizzle and drizzle-orm for database access
+- Use SQLite as the database engine
+- Use tRPC v11 for type-safe API communication
+- Use Zod v3 for runtime validation
+- For forms, reuse existing components instead of adding new libraries

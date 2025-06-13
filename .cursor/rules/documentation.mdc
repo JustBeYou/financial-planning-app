@@ -1,5 +1,12 @@
 ---
-description:
-globs:
+description: 
+globs: 
 alwaysApply: false
 ---
+# Documentation Guidelines
+
+- Use docblocks (`/** */`) for functions, types, and modules
+- Avoid unnecessary inline comments
+- Consult specifications in `specs/` when implementing features
+- Keep a changelog or follow conventional commits
+
