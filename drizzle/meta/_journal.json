@@ -29,6 +29,13 @@
 			"when": 1749818181193,
 			"tag": "0003_condemned_ricochet",
 			"breakpoints": true
+		},
+		{
+			"idx": 4,
+			"version": "6",
+			"when": 1749821493958,
+			"tag": "0004_round_the_fury",
+			"breakpoints": true
 		}
 	]
 }

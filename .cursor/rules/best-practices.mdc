@@ -15,3 +15,4 @@ alwaysApply: false
 - Auto-generate API and database types where possible
 - Keep a changelog or follow conventional commits
 - Enforce rules via tooling and peer review
+- Always run `npm run check:write` and `npm run typecheck` after you implement something.

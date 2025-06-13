@@ -1,3 +1,4 @@
+import { eq } from "drizzle-orm";
 import { db } from "~/server/db";
 import {
 	budgetAllocations,
@@ -7,6 +8,7 @@ import {
 	incomeSources,
 	investments,
 	realEstateEntries,
+	spendings,
 	users,
 } from "~/server/db/schema";
 
@@ -743,6 +745,202 @@ async function seed() {
 		} else {
 			console.log(
 				`Found ${existingBudgetAllocations.length} existing budget allocations, skipping seed.`,
+			);
+		}
+
+		// Check if we already have spendings
+		const existingSpendings = await db.select().from(spendings);
+
+		if (existingSpendings.length === 0) {
+			console.log("Adding initial spendings...");
+
+			// First, get the budget allocation IDs for each user to add realistic spendings
+			const adminAllocations = await db
+				.select()
+				.from(budgetAllocations)
+				.where(eq(budgetAllocations.userId, ADMIN_ID));
+
+			const testAllocations = await db
+				.select()
+				.from(budgetAllocations)
+				.where(eq(budgetAllocations.userId, TEST_ID));
+
+			const demoAllocations = await db
+				.select()
+				.from(budgetAllocations)
+				.where(eq(budgetAllocations.userId, DEMO_ID));
+
+			// Initial spendings data for Admin User
+			const initialSpendings: Array<{
+				allocationId: number;
+				name: string;
+				amount: number;
+				currency: string;
+				date: string;
+				description: string;
+				category: string;
+			}> = [];
+
+			// Find specific allocations and add spendings for them
+			const housingAllocation = adminAllocations.find(
+				(alloc) => alloc.name === "Housing",
+			);
+			const foodAllocation = adminAllocations.find(
+				(alloc) => alloc.name === "Food",
+			);
+			const transportationAllocation = adminAllocations.find(
+				(alloc) => alloc.name === "Transportation",
+			);
+
+			if (housingAllocation) {
+				initialSpendings.push(
+					{
+						allocationId: housingAllocation.id,
+						name: "Monthly Rent",
+						amount: 2500,
+						currency: "RON",
+						date: "2024-01-01",
+						description: "January rent payment",
+						category: "Housing",
+					},
+					{
+						allocationId: housingAllocation.id,
+						name: "Utilities",
+						amount: 400,
+						currency: "RON",
+						date: "2024-01-05",
+						description: "Electricity and gas bill",
+						category: "Utilities",
+					},
+				);
+			}
+
+			if (foodAllocation) {
+				initialSpendings.push(
+					{
+						allocationId: foodAllocation.id,
+						name: "Grocery Shopping",
+						amount: 350,
+						currency: "RON",
+						date: "2024-01-02",
+						description: "Weekly groceries from supermarket",
+						category: "Groceries",
+					},
+					{
+						allocationId: foodAllocation.id,
+						name: "Restaurant Dinner",
+						amount: 180,
+						currency: "RON",
+						date: "2024-01-08",
+						description: "Dinner at Italian restaurant",
+						category: "Dining Out",
+					},
+					{
+						allocationId: foodAllocation.id,
+						name: "Coffee & Snacks",
+						amount: 85,
+						currency: "RON",
+						date: "2024-01-10",
+						description: "Coffee shop visits during the week",
+						category: "Beverages",
+					},
+				);
+			}
+
+			if (transportationAllocation) {
+				initialSpendings.push(
+					{
+						allocationId: transportationAllocation.id,
+						name: "Fuel",
+						amount: 320,
+						currency: "RON",
+						date: "2024-01-03",
+						description: "Car fuel for the month",
+						category: "Fuel",
+					},
+					{
+						allocationId: transportationAllocation.id,
+						name: "Public Transport",
+						amount: 120,
+						currency: "RON",
+						date: "2024-01-07",
+						description: "Monthly bus pass",
+						category: "Public Transport",
+					},
+				);
+			}
+
+			// Add spendings for Test User
+			const testHousingAllocation = testAllocations.find(
+				(alloc) => alloc.name === "Test Housing",
+			);
+			if (testHousingAllocation) {
+				initialSpendings.push({
+					allocationId: testHousingAllocation.id,
+					name: "Test Rent",
+					amount: 1800,
+					currency: "RON",
+					date: "2024-01-01",
+					description: "January test rent",
+					category: "Housing",
+				});
+			}
+
+			// Add spendings for Demo User
+			const demoRentAllocation = demoAllocations.find(
+				(alloc) => alloc.name === "Demo Rent",
+			);
+			const demoFoodAllocation = demoAllocations.find(
+				(alloc) => alloc.name === "Demo Food",
+			);
+
+			if (demoRentAllocation) {
+				initialSpendings.push({
+					allocationId: demoRentAllocation.id,
+					name: "Demo Apartment Rent",
+					amount: 2200,
+					currency: "RON",
+					date: "2024-01-01",
+					description: "Monthly apartment rent",
+					category: "Housing",
+				});
+			}
+
+			if (demoFoodAllocation) {
+				initialSpendings.push(
+					{
+						allocationId: demoFoodAllocation.id,
+						name: "Demo Groceries",
+						amount: 450,
+						currency: "RON",
+						date: "2024-01-05",
+						description: "Weekly grocery shopping",
+						category: "Food",
+					},
+					{
+						allocationId: demoFoodAllocation.id,
+						name: "Demo Takeout",
+						amount: 150,
+						currency: "RON",
+						date: "2024-01-12",
+						description: "Takeout food orders",
+						category: "Dining",
+					},
+				);
+			}
+
+			// Insert all spendings
+			if (initialSpendings.length > 0) {
+				await db.insert(spendings).values(initialSpendings);
+				console.log(
+					`✅ Added ${initialSpendings.length} spendings across ${USERS.length} users`,
+				);
+			} else {
+				console.log("No budget allocations found, skipping spendings seed.");
+			}
+		} else {
+			console.log(
+				`Found ${existingSpendings.length} existing spendings, skipping seed.`,
 			);
 		}
 

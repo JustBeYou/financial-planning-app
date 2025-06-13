@@ -227,13 +227,51 @@ export const incomeSourcesRelations = relations(incomeSources, ({ one }) => ({
 	user: one(users, { fields: [incomeSources.userId], references: [users.id] }),
 }));
 
+/**
+ * Spendings table for tracking expenses against budget allocations
+ */
+export const spendings = createTable(
+	"spendings",
+	(d) => ({
+		id: d.integer("id").primaryKey({ autoIncrement: true }),
+		allocationId: d
+			.integer("allocation_id")
+			.notNull()
+			.references(() => budgetAllocations.id, { onDelete: "cascade" }),
+		name: d.text("name").notNull(),
+		amount: d.integer("amount").notNull(), // Store as integer (cents) to avoid floating point issues
+		currency: d.text("currency").notNull().default("RON"),
+		date: d.text("date").notNull(), // Store as text in ISO format
+		description: d.text("description"),
+		category: d.text("category"),
+		createdAt: d
+			.integer("created_at", { mode: "timestamp" })
+			.default(sql`(unixepoch())`),
+		updatedAt: d
+			.integer("updated_at", { mode: "timestamp" })
+			.default(sql`(unixepoch())`),
+	}),
+	(table) => ({
+		allocationIdIdx: index("spending_allocation_id_idx").on(table.allocationId),
+	}),
+);
+
 // Relations for budget allocations
 export const budgetAllocationsRelations = relations(
 	budgetAllocations,
-	({ one }) => ({
+	({ one, many }) => ({
 		user: one(users, {
 			fields: [budgetAllocations.userId],
 			references: [users.id],
 		}),
+		spendings: many(spendings),
 	}),
 );
+
+// Relations for spendings
+export const spendingsRelations = relations(spendings, ({ one }) => ({
+	allocation: one(budgetAllocations, {
+		fields: [spendings.allocationId],
+		references: [budgetAllocations.id],
+	}),
+}));

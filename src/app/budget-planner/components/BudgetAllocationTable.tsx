@@ -39,9 +39,9 @@ export function BudgetAllocationTable({
 	onDeleteSpending,
 	mockSpendings,
 }: BudgetAllocationTableProps) {
-	const [expandedAllocations, setExpandedAllocations] = useState<Set<string | number>>(
-		new Set(),
-	);
+	const [expandedAllocations, setExpandedAllocations] = useState<
+		Set<string | number>
+	>(new Set());
 
 	const toggleExpanded = (allocationId: string | number) => {
 		const newExpanded = new Set(expandedAllocations);
@@ -158,6 +158,7 @@ export function BudgetAllocationTable({
 									<span className="rounded bg-accent-coral/20 px-2 py-1 text-accent-coral text-xs">
 										{spentPercentage.toFixed(1)}%
 									</span>
+									<span className="text-text-gray">spent</span>
 								</div>
 								<div className="flex items-center gap-2">
 									<span
@@ -170,13 +171,15 @@ export function BudgetAllocationTable({
 										{remainingAmount.toLocaleString()} {budget.currency}
 									</span>
 									<span
-										className={`rounded px-2 py-1 text-xs ${remainingAmount >= 0
-											? "bg-accent-lime/20 text-accent-lime"
-											: "bg-accent-coral/20 text-accent-coral"
-											}`}
+										className={`rounded px-2 py-1 text-xs ${
+											remainingAmount >= 0
+												? "bg-accent-lime/20 text-accent-lime"
+												: "bg-accent-coral/20 text-accent-coral"
+										}`}
 									>
 										{(100 - spentPercentage).toFixed(1)}%
 									</span>
+									<span className="text-text-gray">remaining</span>
 								</div>
 							</div>
 						) : (

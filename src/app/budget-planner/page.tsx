@@ -55,16 +55,38 @@ export default function BudgetPlannerPage() {
 	const createBudgetAllocation = api.budget.create.useMutation({
 		onSuccess: () => {
 			void utils.budget.getData.invalidate();
+			void utils.spending.getAll.invalidate();
 		},
 	});
 	const updateBudgetAllocation = api.budget.update.useMutation({
 		onSuccess: () => {
 			void utils.budget.getData.invalidate();
+			void utils.spending.getAll.invalidate();
 		},
 	});
 	const deleteBudgetAllocation = api.budget.delete.useMutation({
 		onSuccess: () => {
 			void utils.budget.getData.invalidate();
+			void utils.spending.getAll.invalidate();
+		},
+	});
+
+	// Spendings
+	const { data: allSpendings, isLoading: isLoadingSpendings } =
+		api.spending.getAll.useQuery();
+	const createSpending = api.spending.create.useMutation({
+		onSuccess: () => {
+			void utils.spending.getAll.invalidate();
+		},
+	});
+	const updateSpending = api.spending.update.useMutation({
+		onSuccess: () => {
+			void utils.spending.getAll.invalidate();
+		},
+	});
+	const deleteSpending = api.spending.delete.useMutation({
+		onSuccess: () => {
+			void utils.spending.getAll.invalidate();
 		},
 	});
 
@@ -107,35 +129,32 @@ export default function BudgetPlannerPage() {
 		description: "",
 		category: "",
 	});
+	const [currentSpendingId, setCurrentSpendingId] = useState<number | null>(
+		null,
+	);
 
-	// Mock spending data - will be replaced with real data later
-	const [mockSpendings, setMockSpendings] = useState<{
-		[allocationId: number]: Spending[];
-	}>({
-		// Example data
-		1: [
-			{
-				id: 1,
-				allocationId: 1,
-				name: "Grocery Shopping",
-				amount: 350,
-				currency: "RON",
-				date: "2024-01-15",
-				description: "Weekly groceries",
-				category: "Food",
-			},
-			{
-				id: 2,
-				allocationId: 1,
-				name: "Restaurant",
-				amount: 120,
-				currency: "RON",
-				date: "2024-01-20",
-				description: "Dinner with friends",
-				category: "Food",
-			},
-		],
-	});
+	// Process spending data by allocation
+	const spendingsByAllocation = (allSpendings ?? []).reduce(
+		(acc, spending) => {
+			if (!acc[spending.allocationId]) {
+				acc[spending.allocationId] = [];
+			}
+			// Convert backend spending to frontend type
+			const frontendSpending: Spending = {
+				id: spending.id,
+				allocationId: spending.allocationId,
+				name: spending.name,
+				amount: spending.amount,
+				currency: spending.currency,
+				date: spending.date,
+				description: spending.description ?? "",
+				category: spending.category ?? "",
+			};
+			acc[spending.allocationId]?.push(frontendSpending);
+			return acc;
+		},
+		{} as { [allocationId: number]: Spending[] },
+	);
 
 	// Show loading state while checking session
 	if (status === "loading") {
@@ -151,7 +170,7 @@ export default function BudgetPlannerPage() {
 		redirect("/overview-dashboard");
 	}
 
-	if (isLoadingIncome || isLoadingBudget) {
+	if (isLoadingIncome || isLoadingBudget || isLoadingSpendings) {
 		return (
 			<div className="flex min-h-screen flex-col items-center justify-center bg-background text-foreground">
 				<div className="text-2xl">Loading...</div>
@@ -368,6 +387,7 @@ export default function BudgetPlannerPage() {
 			description: spending.description,
 			category: spending.category,
 		});
+		setCurrentSpendingId(spending.id);
 		setIsEditSpendingOpen(true);
 	};
 
@@ -381,6 +401,7 @@ export default function BudgetPlannerPage() {
 			description: spending.description,
 			category: spending.category,
 		});
+		setCurrentSpendingId(spending.id);
 		setIsDeleteSpendingOpen(true);
 	};
 
@@ -395,44 +416,38 @@ export default function BudgetPlannerPage() {
 	};
 
 	const handleAddSpendingSubmit = () => {
-		const newSpending: Spending = {
-			id: Date.now(), // Mock ID generation
-			...currentSpending,
-		};
-
-		setMockSpendings((prev) => ({
-			...prev,
-			[currentSpending.allocationId]: [
-				...(prev[currentSpending.allocationId] || []),
-				newSpending,
-			],
-		}));
+		createSpending.mutate({
+			allocationId: currentSpending.allocationId,
+			name: currentSpending.name,
+			amount: currentSpending.amount,
+			currency: currentSpending.currency,
+			date: currentSpending.date,
+			description: currentSpending.description || undefined,
+			category: currentSpending.category || undefined,
+		});
 		setIsAddSpendingOpen(false);
 	};
 
 	const handleEditSpendingSubmit = () => {
-		setMockSpendings((prev) => ({
-			...prev,
-			[currentSpending.allocationId]: (
-				prev[currentSpending.allocationId] || []
-			).map((s) =>
-				s.id === Date.now() // This is a mock - in real app, would use proper ID
-					? { id: s.id, ...currentSpending }
-					: s,
-			),
-		}));
+		if (currentSpendingId) {
+			updateSpending.mutate({
+				id: currentSpendingId,
+				allocationId: currentSpending.allocationId,
+				name: currentSpending.name,
+				amount: currentSpending.amount,
+				currency: currentSpending.currency,
+				date: currentSpending.date,
+				description: currentSpending.description || undefined,
+				category: currentSpending.category || undefined,
+			});
+		}
 		setIsEditSpendingOpen(false);
 	};
 
 	const handleDeleteSpendingConfirm = () => {
-		setMockSpendings((prev) => ({
-			...prev,
-			[currentSpending.allocationId]: (
-				prev[currentSpending.allocationId] || []
-			).filter(
-				(s) => s.name !== currentSpending.name, // Mock filtering - in real app would use proper ID
-			),
-		}));
+		if (currentSpendingId) {
+			deleteSpending.mutate({ id: currentSpendingId });
+		}
 		setIsDeleteSpendingOpen(false);
 	};
 
@@ -477,7 +492,7 @@ export default function BudgetPlannerPage() {
 						onAddSpending={handleAddSpending}
 						onEditSpending={handleEditSpending}
 						onDeleteSpending={handleDeleteSpending}
-						mockSpendings={mockSpendings}
+						mockSpendings={spendingsByAllocation}
 					/>
 				</div>
 			</div>

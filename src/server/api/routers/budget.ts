@@ -2,7 +2,7 @@ import { and, eq } from "drizzle-orm";
 import { z } from "zod";
 import { createTRPCRouter, protectedProcedure } from "~/server/api/trpc";
 import { db } from "~/server/db";
-import { budgetAllocations } from "~/server/db/schema";
+import { budgetAllocations, spendings } from "~/server/db/schema";
 
 // Input schemas for validation
 const budgetAllocationCreateSchema = z.object({
@@ -133,6 +133,76 @@ export const budgetRouter = createTRPCRouter({
 				valueType: updatedAllocation.valueType as "absolute" | "percent",
 			};
 		}),
+
+	/**
+	 * Get budget allocations with their spendings
+	 */
+	getDataWithSpendings: protectedProcedure.query(async ({ ctx }) => {
+		const allocations = await db
+			.select()
+			.from(budgetAllocations)
+			.where(eq(budgetAllocations.userId, ctx.session.user.id));
+
+		// Get all spendings for user's allocations
+		const allocationIds = allocations.map((alloc) => alloc.id);
+		const allSpendings =
+			allocationIds.length > 0
+				? await db
+						.select()
+						.from(spendings)
+						.where(eq(spendings.allocationId, allocationIds[0] ?? 0)) // This will be replaced with proper IN query
+				: [];
+
+		// For now, let's get spendings for each allocation individually
+		const spendingsByAllocation: Record<
+			number,
+			Array<{
+				id: number;
+				allocationId: number;
+				name: string;
+				amount: number;
+				currency: string;
+				date: string;
+				description: string | null;
+				category: string | null;
+				createdAt: Date | null;
+				updatedAt: Date | null;
+			}>
+		> = {};
+		for (const allocation of allocations) {
+			const allocationSpendings = await db
+				.select()
+				.from(spendings)
+				.where(eq(spendings.allocationId, allocation.id));
+
+			spendingsByAllocation[allocation.id] = allocationSpendings.map(
+				(spending) => ({
+					id: spending.id,
+					allocationId: spending.allocationId,
+					name: spending.name,
+					amount: spending.amount,
+					currency: spending.currency,
+					date: spending.date,
+					description: spending.description,
+					category: spending.category,
+					createdAt: spending.createdAt,
+					updatedAt: spending.updatedAt,
+				}),
+			);
+		}
+
+		return {
+			allocations: allocations.map((allocation) => ({
+				id: allocation.id,
+				name: allocation.name,
+				value: allocation.value,
+				currency: allocation.currency,
+				type: allocation.type as "monthly" | "yearly",
+				valueType: allocation.valueType as "absolute" | "percent",
+			})),
+			spendingsByAllocation,
+		};
+	}),
 
 	/**
 	 * Delete a budget allocation
