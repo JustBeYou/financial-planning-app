@@ -27,11 +27,10 @@ const CurrencyInput = React.forwardRef<HTMLInputElement, CurrencyInputProps>(
 		const [displayValue, setDisplayValue] = React.useState<string>("");
 		const [isFocused, setIsFocused] = React.useState(false);
 
-		// Format number with separators for display
-		const formatNumber = React.useCallback((num: number): string => {
-			if (num === 0) return "";
-			return num.toLocaleString("ro-RO");
-		}, []);
+	       // Format number with separators for display
+	       const formatNumber = React.useCallback((num: number): string => {
+		       return num.toLocaleString("ro-RO");
+	       }, []);
 
 		// Parse formatted string back to number
 		const parseNumber = (str: string): number => {
@@ -44,17 +43,14 @@ const CurrencyInput = React.forwardRef<HTMLInputElement, CurrencyInputProps>(
 			return Number.isNaN(parsed) ? 0 : parsed;
 		};
 
-		// Update display value when prop value changes
-		React.useEffect(() => {
-			if (!isFocused) {
-				setDisplayValue(formatNumber(value));
-			}
-		}, [value, isFocused, formatNumber]);
-
-		// Initialize display value
-		React.useEffect(() => {
-			setDisplayValue(formatNumber(value));
-		}, [value, formatNumber]);
+	       // Update display value when prop value changes
+	       React.useEffect(() => {
+		       if (!isFocused) {
+			       setDisplayValue(formatNumber(value));
+		       } else {
+			       setDisplayValue(value === 0 ? "" : value.toString());
+		       }
+	       }, [value, isFocused, formatNumber]);
 
 		const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
 			const inputValue = e.target.value;
